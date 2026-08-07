@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Peta Literatur Wellbeing — CESGS Project Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+<style>
+:root{
+  /* ---- token Project Hub (ubah di sini kalau nilai aslinya beda) ---- */
+  --navy-900:#0D2340;      /* topbar */
+  --navy-700:#1B3A6B;      /* menu aktif, tombol utama */
+  --navy-500:#2E5C9A;
+  --biru:#2E75B6;          /* aksen tautan */
+  --bg:#F4F6FA;
+  --kartu:#FFFFFF;
+  --line:#E3E8F0;
+  --line2:#EDF1F7;
+  --ink:#1F2937;
+  --ink2:#374151;
+  --muted:#6B7280;
+  --muted2:#9CA3AF;
+  --hover:#F5F8FD;
+  --radius:8px;
+  --side-w:246px;
+  --top-h:56px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);
+     font-size:13.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--biru);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:inherit}
+
+/* ================= SHELL ================= */
+.app{display:flex;min-height:100vh}
+.side{width:var(--side-w);flex:0 0 var(--side-w);background:#fff;border-right:1px solid var(--line);
+      display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:40}
+.brand{height:var(--top-h);display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand .mark{width:28px;height:28px;border-radius:6px;background:var(--navy-700);color:#fff;font-weight:700;
+             font-size:12px;display:flex;align-items:center;justify-content:center;letter-spacing:.5px}
+.brand .nm{font-weight:700;font-size:14px;color:var(--navy-900);line-height:1.15}
+.brand .sb{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.nav{flex:1;overflow-y:auto;padding:12px 10px 18px}
+.nav .grp{font-size:10.5px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.07em;
+          padding:12px 10px 6px}
+.nav a.it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);color:var(--ink2);
+          font-size:13px;font-weight:500;margin-bottom:2px;cursor:pointer}
+.nav a.it:hover{background:var(--hover);text-decoration:none}
+.nav a.it.on{background:var(--navy-700);color:#fff;font-weight:600}
+.nav a.it .ic{width:16px;height:16px;flex:0 0 16px;opacity:.9}
+.nav a.it .bdg{margin-left:auto;font-size:11px;font-weight:600;background:var(--line2);color:var(--muted);
+               border-radius:999px;padding:1px 7px}
+.nav a.it.on .bdg{background:rgba(255,255,255,.18);color:#fff}
+.side .foot{padding:12px 16px;border-top:1px solid var(--line);font-size:11px;color:var(--muted2);line-height:1.4}
+
+.main{flex:1;min-width:0;margin-left:var(--side-w);display:flex;flex-direction:column}
+.topbar{height:var(--top-h);background:var(--navy-900);color:#fff;display:flex;align-items:center;gap:14px;
+        padding:0 18px;position:sticky;top:0;z-index:30}
+.topbar .burger{display:none;background:none;border:0;color:#fff;font-size:18px;cursor:pointer;padding:4px 6px}
+.topbar .ttl{font-weight:600;font-size:14px}
+.topbar .crumb{font-size:11.5px;color:#9DB4D4}
+.topbar .sp{flex:1}
+.searchpill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);
+            border-radius:999px;padding:5px 12px;min-width:230px}
+.searchpill input{background:none;border:0;outline:0;color:#fff;font-size:12.5px;width:100%;font-family:inherit}
+.searchpill input::placeholder{color:#A9BDD8}
+.searchpill svg{opacity:.75;flex:0 0 14px}
+.userchip{display:flex;align-items:center;gap:8px;font-size:12px}
+.userchip .av{width:26px;height:26px;border-radius:50%;background:#2E5C9A;display:flex;align-items:center;
+              justify-content:center;font-size:10.5px;font-weight:700}
+
+.scroll{flex:1;padding:20px 22px 44px;max-width:1560px;width:100%}
+.page{display:none}
+.page.on{display:block}
+.eyebrow{font-size:10.5px;font-weight:700;color:var(--biru);text-transform:uppercase;letter-spacing:.09em;margin-bottom:4px}
+h1.pg{margin:0 0 3px;font-size:19px;font-weight:700;color:var(--navy-900);letter-spacing:-.01em}
+.lead{margin:0 0 16px;color:var(--muted);font-size:12.8px;max-width:1080px}
+.lead b{color:var(--ink2)}
+
+/* ================= KOMPONEN ================= */
+.card{background:var(--kartu);border:1px solid var(--line);border-radius:10px}
+.card>.hd{padding:11px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.card>.hd h3{margin:0;font-size:13px;font-weight:700;color:var(--navy-900)}
+.card>.hd .sub{font-size:11.5px;color:var(--muted2);margin-left:auto}
+.card>.bd{padding:14px}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi .lb{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted2);font-weight:700}
+.kpi .vl{font-size:25px;font-weight:700;color:var(--navy-900);line-height:1.2;margin-top:3px}
+.kpi .dl{font-size:11.5px;color:var(--muted)}
+
+.grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;align-items:stretch}
+.grid2>*{min-width:0}
+@media(max-width:1080px){.grid2{grid-template-columns:1fr}}
+
+.barrow{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12.5px}
+.barrow .nm{width:132px;flex:0 0 132px;color:var(--ink2);font-weight:600}
+.barrow .tr{flex:1;height:9px;background:var(--line2);border-radius:999px;overflow:hidden}
+.barrow .fl{height:100%;border-radius:999px;background:var(--navy-500)}
+.barrow .vn{width:30px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:12px}
+.chips .lbl{font-size:10.5px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.07em;margin-right:2px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.3px;cursor:pointer;
+      display:inline-flex;align-items:center;gap:7px;user-select:none;color:var(--ink2);transition:.12s;font-weight:500}
+.chip:hover{border-color:#B9C6D8;background:var(--hover)}
+.chip .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.chip .ct{color:var(--muted2);font-size:11.5px}
+.chip.on{background:var(--navy-700);border-color:var(--navy-700);color:#fff;font-weight:600}
+.chip.on .ct{color:#C7D6EC}
+.chip.ghost{background:var(--line2);border-style:dashed;color:var(--muted)}
+
+.tabs{display:inline-flex;background:var(--line2);border-radius:999px;padding:3px;gap:2px;margin-bottom:12px}
+.tabs .tb{border:0;background:none;padding:6px 15px;border-radius:999px;font-size:12.5px;font-weight:600;
+          color:var(--muted);cursor:pointer}
+.tabs .tb.on{background:#fff;color:var(--navy-900);box-shadow:0 1px 3px rgba(13,35,64,.12)}
+
+.tag{font-size:11px;font-weight:600;border-radius:5px;padding:2px 8px;display:inline-block;white-space:nowrap}
+.vb{font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.v1{background:#E7F6EC;color:#1B6B37;border:1px solid #BFE5CC}
+.v2{background:#FEF6E0;color:#8A6100;border:1px solid #F3E0AC}
+.v3{background:#FDEEE3;color:#8F4B16;border:1px solid #F5D6BE}
+.bv{background:#FDECEC;color:#93231F;border:1px solid #F5C9C6}
+
+/* ---- peta alur (graf) ---- */
+#cy{width:100%;height:calc(100vh - 300px);min-height:520px;background:
+    linear-gradient(180deg,#FBFCFE,#F2F6FC);border-radius:10px;border:1px solid var(--line);display:block}
+.gnote{font-size:11.5px;color:var(--muted);padding:8px 2px 0}
+
+/* ---- peta kaitan (kolom) ---- */
+.map-wrap{position:relative}
+#links{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:visible}
+.mapscroll{overflow-x:auto;padding-bottom:6px}
+.map{position:relative;z-index:2;display:flex;gap:12px;align-items:stretch;min-width:1120px}
+.col{flex:1;min-width:196px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;
+     display:flex;flex-direction:column}
+.col.muara{flex:0 0 186px;background:linear-gradient(180deg,#EAF2FB,#F7FAFE);border-color:#C6D8EE}
+.col-head{margin-bottom:9px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
+.col-head .step{font-size:10px;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.col-head .name{font-weight:700;font-size:14px;color:var(--navy-900);letter-spacing:-.01em}
+.col-head .baby{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+.col-head .baby b{color:var(--ink2);font-weight:600}
+.col-head .ask{font-size:11.5px;color:var(--biru);font-style:italic;margin-top:3px}
+.mcard{background:#fff;border:1px solid var(--line);border-left:3px solid var(--line);border-radius:7px;
+       padding:8px 10px;margin-bottom:7px;cursor:pointer;transition:.13s}
+.mcard:hover{border-color:#B9C6D8;background:var(--hover)}
+.mcard .code{font-size:10px;color:var(--muted2);font-weight:700;letter-spacing:.05em}
+.mcard .who{font-size:12.5px;font-weight:600;color:var(--navy-900);margin:1px 0}
+.mcard .say{font-size:11.5px;color:var(--muted);line-height:1.4}
+.mcard .dots{margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.mcard .dots i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.mcard.dim{opacity:.22;filter:grayscale(.5)}
+.mcard.hot{border-color:var(--navy-700);box-shadow:0 2px 10px rgba(27,58,107,.16)}
+.muara-badge{margin-top:auto;text-align:center;padding:16px 8px}
+.muara-badge .lbl{font-weight:700;color:var(--navy-900);font-size:13px;line-height:1.3}
+.muara-badge .sub{font-size:11px;color:var(--muted);margin-top:6px}
+.muara-badge .ring{width:64px;height:64px;border-radius:50%;border:3px solid var(--navy-500);margin:0 auto 10px;
+                   display:flex;align-items:center;justify-content:center;color:var(--navy-700);font-weight:700;font-size:11px}
+
+/* ---- benang merah ---- */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.tcard{background:#fff;border:1px solid var(--line);border-left:4px solid;border-radius:10px;padding:13px 15px;cursor:pointer}
+.tcard:hover{box-shadow:0 2px 10px rgba(13,35,64,.07)}
+.tcard h3{margin:0 0 5px;font-size:13.5px;font-weight:700;color:var(--navy-900);display:flex;align-items:center;gap:8px}
+.tcard h3 .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.tcard p{margin:4px 0;font-size:12.3px;color:var(--muted);line-height:1.5}
+.tcard .kw{font-size:12.2px;background:var(--hover);border:1px solid var(--line);border-radius:7px;padding:8px 10px;margin-top:9px;color:var(--ink2)}
+.tcard .jabar{font-size:11.3px;color:var(--muted2);margin-top:3px}
+.tcard .mem{font-size:11.5px;color:var(--muted);margin-top:9px;line-height:1.7}
+.tcard .mem b{color:var(--ink2)}
+.tcard .mem span{cursor:pointer;color:var(--biru);border-bottom:1px dotted #A9C2DD}
+
+/* ---- tabel gaya Ant ---- */
+.tbwrap{overflow-x:auto}
+table.ant{width:100%;border-collapse:collapse;font-size:12.5px}
+table.ant th{background:#FAFBFD;text-align:left;font-weight:600;color:var(--ink2);padding:10px 12px;
+             border-bottom:1px solid var(--line);white-space:nowrap;font-size:12px}
+table.ant td{padding:10px 12px;border-bottom:1px solid var(--line2);vertical-align:top}
+table.ant tr:hover td{background:var(--hover)}
+table.ant td .t1{font-weight:600;color:var(--navy-900)}
+table.ant td .t2{color:var(--muted);font-size:11.5px}
+table.ant td.act a{font-size:12px;font-weight:600}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+select.sel,input.inp{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:12.3px;
+                     color:var(--ink2);outline:0;font-family:inherit}
+select.sel:focus,input.inp:focus{border-color:var(--navy-500)}
+input.inp{min-width:230px}
+.pager{display:flex;align-items:center;gap:6px;justify-content:flex-end;padding:12px 14px;font-size:12.3px;color:var(--muted)}
+.pager button{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:28px;height:28px;cursor:pointer;
+              color:var(--ink2);font-size:12.3px}
+.pager button:hover:not(:disabled){border-color:var(--navy-500);color:var(--navy-700)}
+.pager button.on{background:var(--navy-700);border-color:var(--navy-700);color:#fff;font-weight:600}
+.pager button:disabled{opacity:.4;cursor:default}
+.empty{padding:26px;text-align:center;color:var(--muted2);font-size:12.5px}
+
+/* ---- panel & modal ---- */
+.dpanel{position:fixed;right:20px;bottom:20px;width:344px;max-width:92vw;background:#fff;border:1px solid var(--line);
+        border-radius:10px;box-shadow:0 12px 34px rgba(13,35,64,.16);padding:15px 16px;display:none;z-index:45}
+.dpanel.show{display:block}
+.dpanel h4{margin:2px 0 4px;font-size:14px;color:var(--navy-900)}
+.dpanel .code{font-size:10.5px;color:var(--muted2);font-weight:700;letter-spacing:.05em}
+.dpanel .say{font-size:12.3px;color:var(--muted);margin:6px 0 10px}
+.dpanel .row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.xbtn{position:absolute;top:9px;right:11px;border:0;background:none;color:var(--muted2);font-size:16px;cursor:pointer;line-height:1}
+.btn{display:inline-block;background:var(--navy-700);color:#fff;font-size:12.3px;font-weight:600;padding:7px 14px;
+     border-radius:7px;border:0;cursor:pointer}
+.btn:hover{background:#16325C;text-decoration:none;color:#fff}
+.btn.gh{background:#fff;color:var(--navy-700);border:1px solid var(--line)}
+.btn.gh:hover{background:var(--hover);color:var(--navy-700)}
+
+.modal-bg{position:fixed;inset:0;background:rgba(13,35,64,.42);display:none;align-items:center;justify-content:center;
+          z-index:60;padding:18px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:12px;max-width:600px;width:100%;padding:20px 22px;max-height:88vh;overflow:auto;
+       box-shadow:0 20px 50px rgba(13,35,64,.28);position:relative}
+.modal .code{font-size:10.5px;color:var(--muted2);font-weight:700;letter-spacing:.06em}
+.modal h3{margin:3px 0 3px;font-size:16px;color:var(--navy-900);font-weight:700}
+.modal .meta{color:var(--muted);font-size:12.3px;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.modal .block{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:12.5px;color:var(--ink2)}
+.modal .block>b{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted2);margin-bottom:5px}
+.friends{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.friends span{font-size:11.5px;background:var(--hover);border:1px solid var(--line);border-radius:6px;padding:3px 8px;
+              cursor:pointer;color:var(--ink2)}
+.friends span:hover{border-color:var(--navy-500)}
+.mlinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* ---- responsif ---- */
+.backdrop{display:none;position:fixed;inset:0;background:rgba(13,35,64,.35);z-index:35}
+@media(max-width:1000px){
+  .side{transform:translateX(-100%);transition:transform .18s}
+  .side.open{transform:none}
+  .main{margin-left:0}
+  .topbar .burger{display:block}
+  .searchpill{min-width:0;width:150px}
+  .backdrop.show{display:block}
+  .scroll{padding:16px 14px 40px}
+}
+@media(max-width:640px){
+  .searchpill{display:none}
+  .userchip .nmx{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="backdrop" id="backdrop"></div>
+
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand">
+      <div class="mark">CE</div>
+      <div>
+        <div class="nm">Project Hub</div>
+        <div class="sb">Peta Literatur</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="grp">Ringkasan</div>
+      <a class="it" data-pg="ringkasan"><span class="ic">■</span>Ikhtisar</a>
+      <div class="grp">Peta</div>
+      <a class="it" data-pg="alur"><span class="ic">◇</span>Peta Alur<span class="bdg" id="bd-alur">5</span></a>
+      <a class="it" data-pg="kaitan"><span class="ic">▤</span>Peta Kaitan<span class="bdg" id="bd-kaitan">36</span></a>
+      <div class="grp">Analisis</div>
+      <a class="it" data-pg="benang"><span class="ic">≡</span>Benang Merah<span class="bdg" id="bd-benang">8</span></a>
+      <a class="it" data-pg="sumber"><span class="ic">☰</span>Daftar Sumber<span class="bdg" id="bd-sumber">36</span></a>
+      <div class="grp">Arsip</div>
+      <a class="it" data-pg="berkas"><span class="ic">▣</span>Berkas Rujukan<span class="bdg" id="bd-berkas">5</span></a>
+    </nav>
+    <div class="foot">Basis data terverifikasi<br>TEMPLATE-MAPPING-WELLBEING.xlsx</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="burger" id="burger" aria-label="Menu">☰</button>
+      <div>
+        <div class="ttl" id="topTtl">Ikhtisar</div>
+        <div class="crumb" id="topCrumb">Project Hub / Peta Literatur Wellbeing</div>
+      </div>
+      <div class="sp"></div>
+      <div class="searchpill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+          <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input id="topSearch" placeholder="Cari sumber, penulis, standar…" />
+      </div>
+      <div class="userchip"><div class="av">IH</div><span class="nmx">CESGS</span></div>
+    </header>
+
+    <div class="scroll">
+
+      <!-- ============ RINGKASAN ============ -->
+      <section class="page" id="pg-ringkasan">
+        <div class="eyebrow">Studi Literatur</div>
+        <h1 class="pg">Peta Literatur Wellbeing</h1>
+        <p class="lead">Tiga puluh enam sumber (buku, jurnal, alat ukur, standar resmi) disusun sebagai lima tahap pemahaman, dari <b>akar</b> sampai <b>muara</b>. Tiap sumber sudah ditelusuri satu per satu dan diberi status verifikasi. Warna menandai <b>benang merah</b>, yaitu tema yang dibicarakan bersama oleh beberapa sumber meski berbeda tahap.</p>
+        <div class="kpis" id="kpis"></div>
+        <div class="grid2">
+          <div class="card">
+            <div class="hd"><h3>Sebaran sumber per tahap</h3><span class="sub">klik untuk membuka daftar</span></div>
+            <div class="bd" id="barStage"></div>
+          </div>
+          <div class="card">
+            <div class="hd"><h3>Status verifikasi</h3></div>
+            <div class="bd" id="barVerif"></div>
+          </div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="card">
+          <div class="hd"><h3>Benang merah dan jumlah anggotanya</h3><span class="sub">klik untuk menyorot di peta</span></div>
+          <div class="bd" id="barGeng"></div>
+        </div>
+      </section>
+
+      <!-- ============ PETA ALUR ============ -->
+      <section class="page" id="pg-alur">
+        <div class="eyebrow">Peta 1</div>
+        <h1 class="pg">Alur Konsep, dari Akar ke Muara</h1>
+        <p class="lead">Garis biru tebal adalah <b>alur pemahaman</b> antartahap, bukan hubungan sebab akibat. Garis berwarna adalah <b>benang merah</b> antarsumber. Klik simpul untuk membuka rincian dan tautan sumber; seret untuk menggeser, gulir untuk memperbesar.</p>
+        <div class="chips" id="chipsAlur"><span class="lbl">Sorot benang merah</span></div>
+        <div id="cy"></div>
+        <div class="gnote">Simpul hijau di kanan adalah muara, yaitu pemahaman utuh dari definisi sampai pelembagaan.</div>
+      </section>
+
+      <!-- ============ PETA KAITAN ============ -->
+      <section class="page" id="pg-kaitan">
+        <div class="eyebrow">Peta 2</div>
+        <h1 class="pg">Kaitan Antarsumber per Tahap</h1>
+        <p class="lead">Tiap kolom adalah satu tahap. Titik warna pada kartu menandai benang merah yang diikuti sumber itu. Pilih satu benang merah untuk memunculkan garis penghubungnya, klik kartu untuk rincian.</p>
+        <div class="chips" id="chipsKaitan"><span class="lbl">Sorot benang merah</span></div>
+        <div class="map-wrap">
+          <svg id="links"></svg>
+          <div class="mapscroll"><div class="map" id="map"></div></div>
+        </div>
+      </section>
+
+      <!-- ============ BENANG MERAH ============ -->
+      <section class="page" id="pg-benang">
+        <div class="eyebrow">Analisis</div>
+        <h1 class="pg">Benang Merah Antarsumber</h1>
+        <p class="lead">Delapan tema yang muncul berulang. Meski berada di tahap berbeda, sumber dalam satu benang merah sebenarnya membicarakan persoalan yang sama.</p>
+        <div class="tgrid" id="tgrid"></div>
+      </section>
+
+      <!-- ============ DAFTAR SUMBER ============ -->
+      <section class="page" id="pg-sumber">
+        <div class="eyebrow">Basis Data</div>
+        <h1 class="pg">Daftar Sumber</h1>
+        <p class="lead">Seluruh sumber beserta status verifikasi dan tautan aslinya. Gunakan penyaring untuk mempersempit menurut tahap, benang merah, atau status.</p>
+        <div class="filters">
+          <select class="sel" id="fStage"></select>
+          <select class="sel" id="fGeng"></select>
+          <select class="sel" id="fVerif"></select>
+          <input class="inp" id="fCari" placeholder="Cari nama, judul, atau isi…" />
+          <button class="btn gh" id="fReset">Bersihkan</button>
+        </div>
+        <div class="card">
+          <div class="tbwrap">
+            <table class="ant">
+              <thead><tr>
+                <th style="width:78px">Kode</th>
+                <th>Sumber</th>
+                <th style="width:150px">Tahap</th>
+                <th style="width:210px">Benang merah</th>
+                <th style="width:96px">Verifikasi</th>
+                <th style="width:132px">Tautan</th>
+              </tr></thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div class="pager" id="pager"></div>
+        </div>
+        <p class="lead" style="margin-top:14px">Status verifikasi: <b>V1</b> kutipan langsung dari sumbernya, <b>V2</b> sebagian melalui abstrak atau siaran resmi, <b>V3</b> dari katalog atau deskripsi resmi untuk dokumen berbayar, <b>BV</b> belum bisa diakses.</p>
+      </section>
+
+      <!-- ============ BERKAS RUJUKAN ============ -->
+      <section class="page" id="pg-berkas">
+        <div class="eyebrow">Arsip</div>
+        <h1 class="pg">Berkas Rujukan Proyek</h1>
+        <p class="lead">Paparan dan dokumen kerja yang menjadi pasangan peta ini, tersimpan di SharePoint CESGS. Berkas terbuka di tab baru dan mengikuti izin akses tenant, jadi pengguna di luar CESGS perlu diberi akses lebih dulu.</p>
+        <div class="chips" id="chipsBerkas"><span class="lbl">Saring jenis</span></div>
+        <div class="card">
+          <div class="tbwrap">
+            <table class="ant">
+              <thead><tr>
+                <th style="width:76px">Kode</th>
+                <th>Berkas</th>
+                <th style="width:118px">Jenis</th>
+                <th style="width:150px">Kaitan</th>
+                <th style="width:110px">Aksi</th>
+              </tr></thead>
+              <tbody id="tbodyDoc"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="dpanel" id="dpanel">
+  <button class="xbtn" id="dpClose">×</button>
+  <div class="code" id="dpCode"></div>
+  <h4 id="dpTitle"></h4>
+  <div class="say" id="dpSay"></div>
+  <div class="row" id="dpTags"></div>
+  <a class="btn" id="dpLink" href="#" target="_blank" rel="noopener">Buka sumber</a>
+  <button class="btn gh" id="dpMore">Rincian</button>
+</div>
+
+<div class="modal-bg" id="modalbg"><div class="modal" id="modal"></div></div>
+
+<script>
+/* =====================================================================
+   PETA LITERATUR WELLBEING — gabungan peta-literatur + peta-kaitan
+   Satu basis data, empat tampilan.
+   ===================================================================== */
+
+/* ---------------- 1. BENANG MERAH (geng) ---------------- */
+const GENG = {
+  perma: {color:"#2563EB", kw:"PERMA", arti:"lima bahan rasa sejahtera",
+    judul:"Rasa sejahtera itu gabungan beberapa bahan",
+    konteks:"Beberapa sumber sepakat bahwa sejahtera bukan satu hal tunggal, melainkan campuran beberapa bahan. Seligman menyusun resep aslinya, sumber lain menambah bahan atau membuat alat ukurnya.",
+    jabar:"Emosi positif · Keterlibatan · Hubungan · Makna · Pencapaian"},
+  risiko:{color:"#DC2626", kw:"Jaga dari Bahaya", arti:"cegah kerja merusak kesehatan mental",
+    judul:"Jangan sampai pekerjaan membuat sakit mental",
+    konteks:"Fokusnya menjaga agar pekerjaan tidak merusak kesehatan mental. Sebagian membuat aturan resmi seperti ISO 45003, WHO, dan GRI; sebagian lain membuat alat deteksi bahaya seperti COPSOQ dan iWorkHealth. Bahaya yang disorot adalah beban berlebih, kurang kendali, serta atasan dan rekan yang tidak mendukung."},
+  engage:{color:"#15803D", kw:"Semangat ke Untung", arti:"karyawan bersemangat membuat organisasi lebih baik",
+    judul:"Karyawan bersemangat, apakah organisasinya ikut untung",
+    konteks:"Kelompok ini mencari bukti empiris. Harter, De Neve, dan Bellet menemukan hubungan positif antara wellbeing dan kinerja. Fleming menyela dengan temuan bahwa program yang menyasar individu saja sering tidak berdampak."},
+  iwork: {color:"#9333EA", kw:"iWorkHealth", arti:"alat ukur stres kerja Singapura",
+    judul:"Alat ukur risiko psikososial buatan Singapura",
+    konteks:"Satu pihak membangun instrumennya (Abdin dkk.), satu pihak memakainya untuk memotret seluruh angkatan kerja. Data MOM 2025 menunjukkan sekitar satu dari tiga pekerja mengalami stres kerja atau burnout."},
+  sistem:{color:"#B45309", kw:"Titik Ungkit", arti:"dorong satu hal, banyak ikut berubah",
+    judul:"Cari satu dorongan yang menggerakkan banyak hal",
+    konteks:"Alih-alih menambal masalah satu per satu, carilah titik kecil yang bila didorong ikut menggerakkan banyak hal lain. Donaldson 2025 memakai cara pandang menyeluruh ini untuk wellbeing."},
+  sg:    {color:"#C2410C", kw:"Khusus Singapura", arti:"penerapan di satu negara nyata",
+    judul:"Semua yang khusus tentang Singapura",
+    konteks:"Sumber yang spesifik mengenai Singapura, mulai dari suara karyawan (Yip), alat dan data nasional (iWorkHealth, MOM, MOH), aturan data (PDPC), sampai panduan kampus NUS (WellNUS)."},
+  rasa:  {color:"#0E7490", kw:"Cek Perasaan", arti:"angket pendek pengukur kondisi mental",
+    judul:"Angket pendek untuk memeriksa kondisi mental",
+    konteks:"Daftar pertanyaan singkat untuk mengukur perasaan dan kondisi mental. PHQ-2 menyaring gejala depresi, WHO-5 dan WEMWBS mengukur rasa sejahtera. Praktis untuk pemeriksaan cepat."},
+  lapor: {color:"#64748B", kw:"Lapor Resmi", arti:"kewajiban melaporkan kondisi pekerja",
+    judul:"Aturan wajib melaporkan kondisi pekerja",
+    konteks:"Aturan resmi mengenai cara melaporkan kondisi pekerja, mencakup GRI 403, GRI 401, ESRS, dan IFRS, sehingga organisasi dapat dimintai pertanggungjawaban."}
+};
+Object.values(GENG).forEach(g=>{ g.name = g.kw + " — " + g.arti; });
+
+/* ---------------- 2. TAHAP ---------------- */
+const STAGES = [
+  {key:'akar', step:'Tahap 1', name:'AKAR',        pendek:'Akar',
+   baby:'Paham <b>dasarnya</b> dulu: rasa sejahtera itu apa', ask:'wellbeing itu apa?'},
+  {key:'det',  step:'Tahap 2', name:'DETERMINAN',  pendek:'Determinan',
+   baby:'<b>Pemicunya</b>, yang membuat <b>naik</b> atau <b>turun</b>', ask:'dipengaruhi apa?'},
+  {key:'ukur', step:'Tahap 3', name:'PENGUKURAN',  pendek:'Pengukuran',
+   baby:'Cara <b>mengukur</b> supaya ketahuan <b>angkanya</b>', ask:'diukur bagaimana?'},
+  {key:'kont', step:'Tahap 4', name:'KONTEKS',     pendek:'Konteks',
+   baby:'Dipakai di tempat <b>nyata</b>, terutama Singapura', ask:'diterapkan di mana?'},
+  {key:'lemb', step:'Tahap 5', name:'PELEMBAGAAN', pendek:'Pelembagaan',
+   baby:'Menjadi <b>laporan dan aturan resmi</b>', ask:'dilaporkan bagaimana?'}
+];
+const ST_ORDER = {akar:0, det:1, ukur:2, kont:3, lemb:4};
+const ST_NAME  = Object.fromEntries(STAGES.map(s=>[s.key, s.pendek]));
+
+/* ---------------- 3. SUMBER (36) ----------------
+   say    = penjelasan bahasa sederhana (dari peta-kaitan)
+   ilmiah = ringkasan akademik (dari peta-literatur)
+   link   = tautan utama terverifikasi
+   alt    = tautan alternatif (DOI atau halaman resmi penerbit)
+   v      = status verifikasi                                        */
+const S = [
+ {id:'DEF-1',stage:'akar',who:'NEF (2008)',full:'New Economics Foundation — Five ways to wellbeing',
+  say:'Wellbeing adalah rasa enak ditambah berfungsi baik. Ditambah lima tindakan harian: menyambung, bergerak, menyadari sekitar, belajar, memberi.',
+  ilmiah:'Kerangka lima tindakan harian yang menopang kesejahteraan.',
+  g:[],v:'v1',link:'https://new-economicsf.files.svdcdn.com/production/files/five-ways-to-wellbeing-1.pdf'},
+ {id:'DEF-2',stage:'akar',who:'Rath & Harter (2010)',full:'Wellbeing: The Five Essential Elements',
+  say:'Wellbeing punya lima bagian: karier, sosial, finansial, fisik, dan komunitas, dari riset Gallup di 150 negara.',
+  ilmiah:'Lima unsur wellbeing: kerja, sosial, finansial, fisik, komunitas.',
+  g:['perma'],v:'v3',link:'https://www.barnesandnoble.com/w/well-being-tom-rath/1101708986'},
+ {id:'DEF-3',stage:'akar',who:'WHO (2010)',full:'Healthy workplaces: A model for action',
+  say:'Definisi tempat kerja sehat: melindungi dan mempromosikan kesehatan lewat empat jalur, termasuk lingkungan psikososial.',
+  ilmiah:'Model healthy workplaces dengan empat jalur pengaruh.',
+  g:['risiko'],v:'v1',link:'https://www.who.int/publications/i/item/9789241599313'},
+ {id:'DEF-4',stage:'akar',who:'Seligman (2011)',full:'Flourish',
+  say:'Resep PERMA: emosi positif, keterlibatan, hubungan, makna, pencapaian. Menjadi pondasi banyak teori lain.',
+  ilmiah:'Model PERMA sebagai lima unsur flourishing.',
+  g:['perma'],v:'v3',link:'https://books.google.co.id/books/about/Flourish.html?id=ng7RJW-udoQC'},
+ {id:'DEF-5',stage:'akar',who:'Bakker & Demerouti (2017)',full:'Job Demands–Resources theory',
+  say:'Kerja adalah tarik menarik antara tuntutan yang menguras dan sumber daya yang menopang serta memotivasi.',
+  ilmiah:'JD-R: keseimbangan tuntutan kerja dan sumber daya kerja.',
+  g:['engage'],v:'v1',link:'https://pubmed.ncbi.nlm.nih.gov/27732008/',alt:'https://doi.org/10.1037/ocp0000056'},
+ {id:'DEF-6',stage:'akar',who:'Donaldson dkk. (2022)',full:'PERMA+4',
+  say:'Resep PERMA ditambah empat bahan kerja: kesehatan fisik, pola pikir, lingkungan kerja, dan keamanan ekonomi.',
+  ilmiah:'PERMA+4 menambahkan faktor kerja pada model asli.',
+  g:['perma'],v:'v1',link:'https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2021.817244/full',alt:'https://doi.org/10.3389/fpsyg.2021.817244'},
+ {id:'DEF-7',stage:'akar',who:'Yip dkk. (2024)',full:'Workplace wellbeing dalam konteks Singapura',
+  say:'Menanyakan langsung kepada karyawan Singapura apa yang membuat mereka sejahtera di kantor, menghasilkan 13 tema.',
+  ilmiah:'Studi kualitatif, 13 tema wellbeing pada konteks Singapura.',
+  g:['risiko','sg'],v:'v1',link:'https://doi.org/10.46743/2160-3715/2024.6795'},
+
+ {id:'DET-1',stage:'det',who:'Edmondson (1999)',full:'Psychological safety',
+  say:'Tim yang aman untuk bersuara lebih berani belajar dari kesalahan sehingga hasilnya lebih baik.',
+  ilmiah:'Keamanan psikologis mendorong perilaku belajar tim.',
+  g:['perma'],v:'v1',link:'https://doi.org/10.2307/2666999'},
+ {id:'DET-2',stage:'det',who:'Harter dkk. (2020)',full:'Q12 meta-analysis',
+  say:'Bukti Gallup: tim yang engaged hasilnya lebih baik pada 11 keluaran, termasuk wellbeing.',
+  ilmiah:'Meta-analisis Q12: engagement dan hasil organisasi.',
+  g:['engage'],v:'v1',link:'https://media-01.imu.nl/storage/happyholics.com/6345/gallup-2020-q12-meta-analysis.pdf'},
+ {id:'DET-3',stage:'det',who:'De Neve dkk. (2023)',full:'Workplace wellbeing & firm performance',
+  say:'Perusahaan dengan karyawan lebih sejahtera menunjukkan kinerja dan harga saham yang lebih baik.',
+  ilmiah:'Wellbeing karyawan berhubungan dengan kinerja perusahaan.',
+  g:['engage'],v:'v1',link:'https://ora.ox.ac.uk/objects/uuid:8652ce7e-7bde-449f-a5e7-6b0d0bcc3605'},
+ {id:'DET-4',stage:'det',who:'Bellet dkk. (2024)',full:'Does happiness impact productivity?',
+  say:'Karyawan yang lebih bahagia terbukti secara sebab akibat menjual lebih banyak.',
+  ilmiah:'Kebahagiaan karyawan meningkatkan produktivitas.',
+  g:['engage'],v:'v1',link:'https://doi.org/10.1287/mnsc.2023.4766'},
+ {id:'DET-5',stage:'det',who:'Fleming (2024)',full:'Individual-level interventions',
+  say:'Peringatan: program wellbeing yang menyasar individu, seperti mindfulness dan aplikasi, sering tidak terbukti berdampak.',
+  ilmiah:'Bantahan: intervensi tingkat individu kerap tanpa dampak.',
+  g:['engage'],v:'v1',link:'https://doi.org/10.1111/irj.12418'},
+ {id:'DET-6',stage:'det',who:'Donaldson dkk. (2025)',full:'Systems-informed PERMA+4',
+  say:'Menggabungkan PERMA+4, rasa aman, dan cara pandang sistem. Terbukti memprediksi wellbeing sekaligus kinerja.',
+  ilmiah:'PERMA+4 dengan lensa sistem (systems-informed).',
+  g:['perma','sistem'],v:'v1',link:'https://doi.org/10.1080/17439760.2024.2387341'},
+
+ {id:'UKUR-1',stage:'ukur',who:'Kroenke dkk. (2003)',full:'PHQ-2',
+  say:'Dua pertanyaan cepat untuk deteksi dini gejala depresi.',
+  ilmiah:'PHQ-2: skrining cepat depresi dua butir.',
+  g:['rasa'],v:'v1',link:'https://pubmed.ncbi.nlm.nih.gov/14583691/',alt:'https://doi.org/10.1097/01.MLR.0000093487.78664.3C'},
+ {id:'UKUR-2',stage:'ukur',who:'Schaufeli dkk. (2006)',full:'UWES-9',
+  say:'Kuesioner pengukur semangat kerja: energi, dedikasi, dan penghayatan.',
+  ilmiah:'UWES: vigor, dedikasi, absorpsi pada work engagement.',
+  g:['engage'],v:'v1',link:'https://research-portal.uu.nl/en/publications/the-measurement-of-work-engagement-with-a-short-questionnaire-a-c/',alt:'https://doi.org/10.1177/0013164405282471'},
+ {id:'UKUR-3',stage:'ukur',who:'Tennant dkk. (2007)',full:'WEMWBS',
+  say:'Empat belas pernyataan positif untuk mengukur kesehatan mental yang baik.',
+  ilmiah:'WEMWBS: skala mental wellbeing 14 butir.',
+  g:['rasa'],v:'v1',link:'https://pmc.ncbi.nlm.nih.gov/articles/PMC2222612/',alt:'https://doi.org/10.1186/1477-7525-5-63'},
+ {id:'UKUR-4',stage:'ukur',who:'Topp dkk. (2015)',full:'WHO-5 Well-Being Index',
+  say:'Lima pertanyaan singkat untuk mengukur rasa sejahtera. Sangat luas dipakai.',
+  ilmiah:'WHO-5: indeks lima butir kesejahteraan umum.',
+  g:['rasa'],v:'v1',link:'https://doi.org/10.1159/000376585'},
+ {id:'UKUR-5',stage:'ukur',who:'Butler & Kern (2016)',full:'PERMA-Profiler',
+  say:'Alat ukur resmi untuk resep PERMA milik Seligman, dengan 15 butir inti.',
+  ilmiah:'PERMA-Profiler: mengukur lima dimensi PERMA.',
+  g:['perma'],v:'v1',link:'https://doi.org/10.5502/ijw.v6i3.526'},
+ {id:'UKUR-6',stage:'ukur',who:'GRI 403 (2018)',full:'Occupational health & safety',
+  say:'Standar pelaporan keselamatan dan kesehatan kerja, termasuk pencegahan bahaya mental, untuk diungkap ke publik.',
+  ilmiah:'Pengungkapan K3, termasuk risiko psikososial.',
+  g:['risiko','lapor'],v:'v1',link:'https://www.globalreporting.org/standards/standards-development/topic-standard-for-occupational-health-and-safety-gri-403/',alt:'https://www.globalreporting.org/standards/media/1640/gri-403-occupational-health-and-safety-2018.pdf'},
+ {id:'UKUR-7',stage:'ukur',who:'Abdin dkk. (2019)',full:'iWorkHealth',
+  say:'Alat Singapura untuk mendeteksi bahaya psikososial: beban kerja, kendali, serta dukungan atasan dan rekan.',
+  ilmiah:'Instrumen risiko psikososial untuk populasi Asia dan Singapura.',
+  g:['risiko','iwork','sg'],v:'v1',link:'https://pmc.ncbi.nlm.nih.gov/articles/PMC6685634/',alt:'https://doi.org/10.1371/journal.pone.0220566'},
+ {id:'UKUR-8',stage:'ukur',who:'Burr dkk. (2019)',full:'COPSOQ III',
+  say:'Kuesioner internasional untuk mengukur faktor psikososial di tempat kerja.',
+  ilmiah:'COPSOQ III: kuesioner risiko psikososial.',
+  g:['risiko'],v:'v1',link:'https://pmc.ncbi.nlm.nih.gov/articles/PMC6933167/',alt:'https://doi.org/10.1016/j.shaw.2019.10.002'},
+ {id:'UKUR-9',stage:'ukur',who:'GRI 401 (2016)',full:'Employment — pelaporan ketenagakerjaan',
+  say:'Standar GRI mengenai cara melaporkan kondisi ketenagakerjaan, mencakup rekrutmen, retensi, dan keluar masuk karyawan. Pengganti gratis dan terbaca untuk ISO 30414 yang berbayar.',
+  ilmiah:'Pelaporan ketenagakerjaan: rekrut, retensi, keluar masuk karyawan.',
+  g:['lapor'],v:'v1',link:'https://www.globalreporting.org/pdf.ashx?id=12543'},
+
+ {id:'KONT-1',stage:'kont',who:'Meadows (1999)',full:'Leverage points',
+  say:'Pada sistem rumit, carilah titik ungkit, yaitu dorongan kecil di tempat tepat dengan efek besar.',
+  ilmiah:'Leverage points: tempat mengintervensi sebuah sistem.',
+  g:['sistem'],v:'v1',link:'https://donellameadows.org/wp-content/userfiles/Leverage_Points.pdf',alt:'https://donellameadows.org/archives/leverage-points-places-to-intervene-in-a-system/'},
+ {id:'KONT-2',stage:'kont',who:'PDPC (2021)',full:'Pedoman PDPA',
+  say:'Aturan Singapura untuk melindungi data pribadi karyawan, menjadi rambu etika data wellbeing.',
+  ilmiah:'PDPA: perlindungan data pribadi dan etika data wellbeing.',
+  g:['sg'],v:'v1',link:'https://www.pdpc.gov.sg/-/media/Files/PDPC/PDF-Files/Advisory-Guidelines/AG-on-Selected-Topics/Advisory-Guidelines-on-the-PDPA-for-Selected-Topics-17-May-2022.pdf',alt:'https://www.pdpc.gov.sg/Guidelines-and-Consultation/2021/10/Advisory-Guidelines-on-the-PDPA-for-Selected-Topics'},
+ {id:'KONT-3',stage:'kont',who:'MOH (2023)',full:'National Population Health Survey 2022',
+  say:'Survei kesehatan penduduk Singapura, termasuk kesehatan mental.',
+  ilmiah:'NPHS 2022: data kesehatan populasi Singapura.',
+  g:['sg'],v:'v1',link:'https://www.moh.gov.sg/others/resources-and-statistics/nphs-2022/'},
+ {id:'KONT-4',stage:'kont',who:'MOM (2025)',full:'iWorkHealth 2024 aggregate',
+  say:'Data nasional: sekitar satu dari tiga karyawan Singapura mengalami stres kerja atau burnout.',
+  ilmiah:'Agregat iWorkHealth 2024: skor risiko psikososial nasional.',
+  g:['iwork','sg'],v:'v2',link:'https://www.mom.gov.sg/newsroom/parliament-questions-and-replies/2025/0922-written-answer-to-pq-on-workplace-burnout'},
+ {id:'KONT-5',stage:'kont',who:'GWI (2026)',full:'Workplace wellbeing trends 2026',
+  say:'Tren 2026: wellbeing naik kelas menjadi infrastruktur organisasi, bukan lagi sekadar program.',
+  ilmiah:'Tren inisiatif wellbeing di tempat kerja.',
+  g:[],v:'v1',link:'https://globalwellnessinstitute.org/global-wellness-institute-blog/2026/04/07/workplace-wellbeing-initiative-trends-for-2026/'},
+
+ {id:'LEMB-1',stage:'lemb',who:'HSE (2004)',full:'Management Standards (stres kerja)',
+  say:'Kerangka resmi regulator keselamatan kerja Inggris dengan enam area risiko psikososial: beban, kendali, dukungan, hubungan, peran, dan perubahan. Pengganti gratis dan terbaca untuk tanya jawab ISO 45003.',
+  ilmiah:'Enam area risiko psikososial versi regulator Inggris.',
+  g:['risiko'],v:'v1',link:'https://www.hse.gov.uk/stress/standards/overview.htm'},
+ {id:'LEMB-2',stage:'lemb',who:'ISO 45003 (2021)',full:'Psychological health & safety at work',
+  say:'Pedoman resmi untuk mengelola risiko psikososial sebagai bagian keselamatan dan kesehatan kerja.',
+  ilmiah:'Kelola risiko psikososial sebagai bagian K3.',
+  g:['risiko'],v:'v1',link:'https://cdn.standards.iteh.ai/samples/64283/4d5e0c08c43947ff8dd73266d2bb2072/ISO-45003-2021.pdf',alt:'https://www.iso.org/standard/64283.html'},
+ {id:'LEMB-3',stage:'lemb',who:'US Surgeon General (2022)',full:'Framework for workplace mental health',
+  say:'Kerangka lima esensi kesehatan mental kerja versi Amerika Serikat: lindungi dari bahaya, koneksi, harmoni, dihargai, dan tumbuh.',
+  ilmiah:'Kerangka lima esensi tempat kerja yang sehat.',
+  g:['risiko'],v:'v2',link:'https://www.aha.org/news/headline/2022-10-21-surgeon-general-releases-framework-workplace-mental-health-well-being',alt:'https://www.hhs.gov/surgeongeneral/priorities/workplace-well-being/index.html'},
+ {id:'LEMB-4',stage:'lemb',who:'WHO (2022)',full:'Guidelines on mental health at work',
+  say:'Pedoman global pertama WHO mengenai kesehatan mental di tempat kerja.',
+  ilmiah:'Pedoman: cegah, lindungi, promosikan kesehatan mental kerja.',
+  g:['risiko'],v:'v1',link:'https://www.who.int/publications/i/item/9789240053052'},
+ {id:'LEMB-5',stage:'lemb',who:'ESRS S1 (EC 2023)',full:'Own Workforce',
+  say:'Aturan Eropa yang mewajibkan perusahaan melaporkan dampaknya terhadap tenaga kerja sendiri.',
+  ilmiah:'Standar Eropa: pengungkapan tenaga kerja sendiri.',
+  g:['risiko','lapor'],v:'v1',link:'https://www.efrag.org/sites/default/files/sites/webpublishing/SiteAssets/ESRS%20S1%20Delegated-act-2023-5303-annex-1_en.pdf'},
+ {id:'LEMB-6',stage:'lemb',who:'IFRS S1 (2023)',full:'Sustainability-related disclosure',
+  say:'Standar pelaporan risiko dan peluang keberlanjutan untuk investor.',
+  ilmiah:'Pengungkapan informasi keberlanjutan terkait keuangan.',
+  g:['lapor'],v:'v1',link:'https://www.ifrs.org/issued-standards/ifrs-sustainability-standards-navigator/ifrs-s1-general-requirements/'},
+ {id:'LEMB-7',stage:'lemb',who:'MOM Tripartite (2023)',full:'Tripartite advisory (mental well-being)',
+  say:'Panduan Singapura dari pemerintah, pengusaha, dan serikat pekerja untuk wellbeing mental pada tiga tingkat.',
+  ilmiah:'Anjuran nasional kesehatan mental di tempat kerja.',
+  g:['risiko','sg'],v:'v1',link:'https://www.mom.gov.sg/employment-practices/tripartism-in-singapore/tripartite-guidelines-and-advisories/tripartite-advisory-on-mental-well-being-at-workplaces'},
+ {id:'LEMB-8',stage:'lemb',who:'WellNUS — panduan manajer (2024)',full:'#WellNUS guide for managers',
+  say:'Panduan praktis bagi manajer NUS untuk mendampingi tim sepanjang spektrum wellbeing.',
+  ilmiah:'Panduan manajer pada kerangka wellbeing kampus.',
+  g:['sg'],v:'v3',link:'https://nus.edu.sg/hwb/wellnus-2/'},
+ {id:'LEMB-9',stage:'lemb',who:'WellNUS — kerangka (2026)',full:'WellNUS framework',
+  say:'Kerangka NUS dengan tiga tingkat akuntabilitas: budaya dan kepemimpinan, sistem, serta individu.',
+  ilmiah:'Kerangka wellbeing kampus NUS.',
+  g:['sg'],v:'v2',link:'https://www.nus.edu.sg/hwb/wellnus-2/'}
+];
+
+const byId = Object.fromEntries(S.map(s=>[s.id,s]));
+const VMAP = {v1:['v1','V1'],v2:['v2','V2'],v3:['v3','V3'],bv:['bv','BV']};
+const VLONG = {v1:'V1 — kutipan langsung',v2:'V2 — sebagian',v3:'V3 — katalog resmi',bv:'BV — belum terakses'};
+
+/* rantai benang merah, urut menurut tahap */
+const CHAINS = {};
+Object.keys(GENG).forEach(k=>{
+  CHAINS[k] = S.filter(s=>s.g.includes(k))
+               .slice().sort((a,b)=>ST_ORDER[a.stage]-ST_ORDER[b.stage])
+               .map(s=>s.id);
+});
+
+const $  = sel=>document.querySelector(sel);
+const $$ = sel=>Array.from(document.querySelectorAll(sel));
+const esc = t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* ---------------- 4. NAVIGASI ---------------- */
+const PAGES = {
+  ringkasan:{ttl:'Ikhtisar',      crumb:'Project Hub / Peta Literatur Wellbeing'},
+  alur:     {ttl:'Peta Alur',     crumb:'Project Hub / Peta Literatur / Alur konsep'},
+  kaitan:   {ttl:'Peta Kaitan',   crumb:'Project Hub / Peta Literatur / Kaitan antarsumber'},
+  benang:   {ttl:'Benang Merah',  crumb:'Project Hub / Peta Literatur / Analisis tema'},
+  sumber:   {ttl:'Daftar Sumber', crumb:'Project Hub / Peta Literatur / Basis data'},
+  berkas:   {ttl:'Berkas Rujukan', crumb:'Project Hub / Peta Literatur / Arsip berkas'}
+};
+let curPage = 'ringkasan';
+function go(pg){
+  curPage = pg;
+  $$('.page').forEach(p=>p.classList.toggle('on', p.id === 'pg'+'-'+pg));
+  $$('#nav .it').forEach(a=>a.classList.toggle('on', a.dataset.pg === pg));
+  $('#topTtl').textContent = PAGES[pg].ttl;
+  $('#topCrumb').textContent = PAGES[pg].crumb;
+  closeSide();
+  window.scrollTo({top:0});
+  if(pg === 'alur'  && cy) setTimeout(()=>{cy.resize();cy.fit(undefined,40);},30);
+  if(pg === 'kaitan') setTimeout(drawLines,40);
+}
+$$('#nav .it').forEach(a=>a.onclick = ()=>go(a.dataset.pg));
+
+function openSide(){ $('#side').classList.add('open'); $('#backdrop').classList.add('show'); }
+function closeSide(){ $('#side').classList.remove('open'); $('#backdrop').classList.remove('show'); }
+$('#burger').onclick = ()=>{ $('#side').classList.contains('open') ? closeSide() : openSide(); };
+$('#backdrop').onclick = closeSide;
+
+/* ---------------- 5. RINGKASAN ---------------- */
+function buildRingkasan(){
+  const nV1 = S.filter(s=>s.v === 'v1').length;
+  const nTaut = S.filter(s=>s.alt).length;
+  const kp = [
+    {lb:'Sumber terverifikasi', vl:S.length,          dl:'buku, jurnal, alat ukur, standar'},
+    {lb:'Tahap pemahaman',      vl:STAGES.length,     dl:'akar sampai muara'},
+    {lb:'Benang merah',         vl:Object.keys(GENG).length, dl:'tema lintas tahap'},
+    {lb:'Kutipan langsung',     vl:nV1,               dl:'berstatus V1 dari '+S.length},
+    {lb:'Tautan ganda',         vl:nTaut,             dl:'punya DOI atau halaman resmi'},
+    {lb:'Berkas rujukan',       vl:DOKUMEN.length,    dl:'paparan dan dokumen SharePoint'}
+  ];
+  $('#kpis').innerHTML = kp.map(k=>
+    '<div class="kpi"><div class="lb">'+k.lb+'</div><div class="vl">'+k.vl+'</div><div class="dl">'+k.dl+'</div></div>').join('');
+
+  const maxS = Math.max(...STAGES.map(st=>S.filter(s=>s.stage===st.key).length));
+  $('#barStage').innerHTML = STAGES.map(st=>{
+    const n = S.filter(s=>s.stage===st.key).length;
+    return '<div class="barrow" data-st="'+st.key+'" style="cursor:pointer">'+
+      '<span class="nm">'+st.pendek+'</span>'+
+      '<span class="tr"><span class="fl" style="width:'+(n/maxS*100)+'%"></span></span>'+
+      '<span class="vn">'+n+'</span></div>';
+  }).join('');
+  $$('#barStage .barrow').forEach(r=>r.onclick = ()=>{
+    $('#fStage').value = r.dataset.st; state.page = 1; renderTable(); go('sumber');
+  });
+
+  const vs = ['v1','v2','v3','bv'];
+  const maxV = Math.max(...vs.map(v=>S.filter(s=>s.v===v).length), 1);
+  $('#barVerif').innerHTML = vs.map(v=>{
+    const n = S.filter(s=>s.v===v).length;
+    return '<div class="barrow"><span class="nm">'+VLONG[v]+'</span>'+
+      '<span class="tr"><span class="fl" style="width:'+(n/maxV*100)+'%"></span></span>'+
+      '<span class="vn">'+n+'</span></div>';
+  }).join('');
+
+  const maxG = Math.max(...Object.keys(GENG).map(k=>CHAINS[k].length));
+  $('#barGeng').innerHTML = Object.entries(GENG).map(([k,g])=>{
+    const n = CHAINS[k].length;
+    return '<div class="barrow" data-g="'+k+'" style="cursor:pointer">'+
+      '<span class="nm" style="width:150px;flex:0 0 150px">'+esc(g.kw)+'</span>'+
+      '<span class="tr"><span class="fl" style="width:'+(n/maxG*100)+'%;background:'+g.color+'"></span></span>'+
+      '<span class="vn">'+n+'</span></div>';
+  }).join('');
+  $$('#barGeng .barrow').forEach(r=>r.onclick = ()=>{ selectGeng(r.dataset.g, true); go('kaitan'); });
+}
+
+/* ---------------- 6. CHIP BENANG MERAH ---------------- */
+let activeGeng = null;
+function buildChips(host){
+  Object.entries(GENG).forEach(([k,g])=>{
+    const c = document.createElement('span');
+    c.className = 'chip'; c.dataset.g = k;
+    c.innerHTML = '<span class="dot" style="background:'+g.color+'"></span>'+esc(g.kw)+
+                  ' <span class="ct">'+CHAINS[k].length+'</span>';
+    c.onclick = ()=>selectGeng(k);
+    host.appendChild(c);
+  });
+  const r = document.createElement('span');
+  r.className = 'chip ghost'; r.textContent = 'Tampilkan semua';
+  r.onclick = ()=>selectGeng(null, true);
+  host.appendChild(r);
+}
+function selectGeng(k, force){
+  activeGeng = force ? k : (activeGeng === k ? null : k);
+  $$('.chips .chip').forEach(c=>c.classList.toggle('on', !!c.dataset.g && c.dataset.g === activeGeng));
+  S.forEach(s=>{
+    const el = document.getElementById('card-'+s.id);
+    if(!el) return;
+    el.classList.remove('dim','hot');
+    if(activeGeng){ s.g.includes(activeGeng) ? el.classList.add('hot') : el.classList.add('dim'); }
+  });
+  refreshGraph();
+  drawLines();
+}
+
+/* ---------------- 7. PETA ALUR (cytoscape) ---------------- */
+const STX = {akar:0, det:300, ukur:600, kont:900, lemb:1200};
+const MUARA_X = 1530;
+let cy = null;
+function buildGraph(){
+  if(typeof cytoscape === 'undefined') return;
+  const elements = [];
+  STAGES.forEach(st=>elements.push({data:{id:st.key, type:'stage', label:st.step+' · '+st.name+'\n('+st.ask+')'}}));
+  elements.push({data:{id:'muara', type:'muara', label:'MUARA\nWELLBEING'}, position:{x:MUARA_X, y:300}});
+  const seen = {};
+  S.forEach(s=>{
+    seen[s.stage] = (seen[s.stage]||0)+1;
+    elements.push({
+      data:{id:s.id, parent:s.stage, type:'src', label:s.who, sid:s.id},
+      position:{x:STX[s.stage], y:70 + (seen[s.stage]-1)*66}
+    });
+  });
+  ['akar>det','det>ukur','ukur>kont','kont>lemb','lemb>muara'].forEach(p=>{
+    const a = p.split('>')[0], b = p.split('>')[1];
+    elements.push({data:{id:'flow_'+a+'_'+b, source:a, target:b, kind:'flow'}});
+  });
+  Object.entries(CHAINS).forEach(([t,chain])=>{
+    for(let i=0;i<chain.length-1;i++){
+      elements.push({data:{id:'th_'+t+'_'+i, source:chain[i], target:chain[i+1],
+                           kind:'theme', theme:t, color:GENG[t].color}});
+    }
+  });
+
+  cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: elements,
+    layout:{name:'preset', fit:true, padding:40},
+    minZoom:0.25, maxZoom:2.2, wheelSensitivity:0.25,
+    style:[
+      {selector:'node[type="stage"]', style:{
+        'label':'data(label)','text-wrap':'wrap','text-valign':'top','text-halign':'center','text-margin-y':-8,
+        'font-size':12,'font-weight':'bold','color':'#1B3A6B','font-family':'Inter, sans-serif',
+        'background-color':'#E8EFF9','background-opacity':0.55,'border-color':'#C6D8EE','border-width':1,
+        'shape':'round-rectangle','padding':14,'text-max-width':200}},
+      {selector:'node[type="src"]', style:{
+        'label':'data(label)','text-wrap':'wrap','text-max-width':126,'font-size':10.5,
+        'font-family':'Inter, sans-serif','text-valign':'center','color':'#fff',
+        'background-color':'#2E5C9A','shape':'round-rectangle','width':144,'height':44,'padding':6,
+        'border-width':1,'border-color':'#1B3A6B'}},
+      {selector:'node[type="muara"]', style:{
+        'label':'data(label)','text-wrap':'wrap','font-size':12,'font-weight':'bold','font-family':'Inter, sans-serif',
+        'text-valign':'center','color':'#0D2340','background-color':'#DCEAF8','border-color':'#1B3A6B',
+        'border-width':2.5,'shape':'ellipse','width':124,'height':124}},
+      {selector:'edge[kind="flow"]', style:{
+        'width':3.5,'line-color':'#9FB8D6','target-arrow-color':'#9FB8D6','target-arrow-shape':'triangle',
+        'curve-style':'straight','arrow-scale':1.2,'opacity':0.9}},
+      {selector:'edge[kind="flow"][target="muara"]', style:{
+        'width':5,'line-color':'#1B3A6B','target-arrow-color':'#1B3A6B'}},
+      {selector:'edge[kind="theme"]', style:{
+        'width':2,'line-color':'data(color)','curve-style':'unbundled-bezier',
+        'control-point-distances':[38],'control-point-weights':[0.5],'opacity':0.22}},
+      {selector:'edge.on',   style:{'opacity':1,'width':4}},
+      {selector:'edge.off',  style:{'opacity':0.03}},
+      {selector:'node.hl',   style:{'border-width':3,'border-color':'#F59E0B','background-color':'#1B3A6B'}},
+      {selector:'node.faded',style:{'opacity':0.16}}
+    ]
+  });
+  cy.on('tap','node[type="src"]', e=>showPanel(e.target.data('sid')));
+  cy.on('tap', e=>{ if(e.target === cy) $('#dpanel').classList.remove('show'); });
+}
+function refreshGraph(){
+  if(!cy) return;
+  cy.batch(()=>{
+    cy.nodes('[type="src"]').forEach(n=>{
+      n.removeClass('hl faded');
+      if(activeGeng){
+        (byId[n.data('sid')].g || []).indexOf(activeGeng) >= 0 ? n.addClass('hl') : n.addClass('faded');
+      }
+    });
+    cy.edges('[kind="theme"]').forEach(e=>{
+      e.removeClass('on off');
+      if(activeGeng){ e.data('theme') === activeGeng ? e.addClass('on') : e.addClass('off'); }
+    });
+  });
+}
+
+/* panel ringkas di peta alur */
+function showPanel(id){
+  const s = byId[id];
+  $('#dpCode').textContent = s.id;
+  $('#dpTitle').textContent = s.full;
+  $('#dpSay').textContent = s.say;
+  $('#dpTags').innerHTML = (s.g.length
+      ? s.g.map(k=>'<span class="tag" style="background:'+GENG[k].color+'1A;color:'+GENG[k].color+'">'+esc(GENG[k].kw)+'</span>').join('')
+      : '<span class="tag" style="background:#EDF1F7;color:#6B7280">fondasi umum</span>')
+    + '<span class="vb '+VMAP[s.v][0]+'">'+VMAP[s.v][1]+'</span>';
+  $('#dpLink').href = s.link;
+  $('#dpMore').onclick = ()=>openModal(s.id);
+  $('#dpanel').classList.add('show');
+}
+$('#dpClose').onclick = ()=>$('#dpanel').classList.remove('show');
+
+/* ---------------- 8. PETA KAITAN (kolom) ---------------- */
+function buildMap(){
+  const map = $('#map');
+  STAGES.forEach(st=>{
+    const col = document.createElement('div'); col.className = 'col';
+    col.innerHTML = '<div class="col-head"><div class="step">'+st.step+'</div><div class="name">'+st.name+
+      '</div><div class="baby">'+st.baby+'</div><div class="ask">'+st.ask+'</div></div>';
+    S.filter(s=>s.stage === st.key).forEach(s=>{
+      const c = document.createElement('div');
+      c.className = 'mcard'; c.id = 'card-'+s.id;
+      c.style.borderLeftColor = s.g.length ? GENG[s.g[0]].color : 'var(--line)';
+      const dots = s.g.map(k=>'<i style="background:'+GENG[k].color+'" title="'+esc(GENG[k].name)+'"></i>').join('');
+      c.innerHTML = '<div class="code">'+s.id+' · '+esc(s.who)+'</div>'+
+                    '<div class="who">'+esc(s.full)+'</div>'+
+                    '<div class="say">'+esc(s.say)+'</div>'+
+                    '<div class="dots">'+(dots || '<span style="font-size:10.5px;color:#9CA3AF">fondasi umum</span>')+'</div>';
+      c.onclick = ()=>openModal(s.id);
+      col.appendChild(c);
+    });
+    map.appendChild(col);
+  });
+  const mu = document.createElement('div'); mu.className = 'col muara'; mu.id = 'muara-node';
+  mu.innerHTML = '<div class="col-head"><div class="step">Muara</div><div class="name">HASIL</div></div>'+
+    '<div class="muara-badge"><div class="ring">MUARA</div><div class="lbl">KESEJAHTERAAN<br>(WELLBEING)</div>'+
+    '<div class="sub">paham utuh, dari definisi ke terukur lalu terlembaga</div></div>';
+  map.appendChild(mu);
+}
+function drawLines(){
+  const svg = $('#links'); if(!svg) return;
+  svg.innerHTML = '';
+  if(!activeGeng || curPage !== 'kaitan') return;
+  const wrapEl = document.querySelector('.map-wrap'); if(!wrapEl) return;
+  const wrap = wrapEl.getBoundingClientRect();
+  svg.setAttribute('width', wrap.width); svg.setAttribute('height', wrap.height);
+  const color = GENG[activeGeng].color;
+  const pts = CHAINS[activeGeng].map(id=>{
+    const el = document.getElementById('card-'+id); if(!el) return null;
+    const r = el.getBoundingClientRect();
+    return {x:r.left - wrap.left + r.width/2, y:r.top - wrap.top + r.height/2};
+  }).filter(Boolean);
+  for(let i=0;i<pts.length-1;i++){
+    const a = pts[i], b = pts[i+1], mx = (a.x+b.x)/2;
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d','M'+a.x+','+a.y+' C'+mx+','+a.y+' '+mx+','+b.y+' '+b.x+','+b.y);
+    p.setAttribute('stroke', color); p.setAttribute('stroke-width','2');
+    p.setAttribute('fill','none'); p.setAttribute('opacity','.85');
+    p.setAttribute('stroke-dasharray','6 5');
+    svg.appendChild(p);
+  }
+  pts.forEach(pt=>{
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',pt.x); c.setAttribute('cy',pt.y); c.setAttribute('r','4.5');
+    c.setAttribute('fill',color); svg.appendChild(c);
+  });
+}
+
+/* ---------------- 9. BENANG MERAH ---------------- */
+function buildThreads(){
+  const tg = $('#tgrid');
+  Object.entries(GENG).forEach(([k,g])=>{
+    const mem = CHAINS[k];
+    const t = document.createElement('div');
+    t.className = 'tcard'; t.style.borderLeftColor = g.color;
+    t.innerHTML =
+      '<h3><span class="dot" style="background:'+g.color+'"></span>'+esc(g.judul)+'</h3>'+
+      '<p>'+esc(g.konteks)+'</p>'+
+      '<div class="kw">Singkatan yang dipakai: <b style="color:'+g.color+'">'+esc(g.kw)+'</b> yaitu '+esc(g.arti)+
+        (g.jabar ? '<div class="jabar">'+esc(g.jabar)+'</div>' : '')+'</div>'+
+      '<div class="mem"><b>Anggota ('+mem.length+'):</b> '+
+        mem.map(id=>'<span data-id="'+id+'">'+id+'</span>').join(' · ')+'</div>';
+    t.onclick = e=>{
+      const sp = e.target.closest('span[data-id]');
+      if(sp){ openModal(sp.dataset.id); return; }
+      selectGeng(k, true); go('kaitan');
+    };
+    tg.appendChild(t);
+  });
+}
+
+/* ---------------- 10. MODAL RINCIAN ---------------- */
+function openModal(id){
+  const s = byId[id];
+  const friendIds = new Set();
+  s.g.forEach(k=>S.filter(x=>x.g.includes(k) && x.id !== id).forEach(x=>friendIds.add(x.id)));
+  const friendsHTML = friendIds.size
+    ? Array.from(friendIds).map(f=>'<span data-id="'+f+'">'+f+' · '+esc(byId[f].who)+'</span>').join('')
+    : '<span style="cursor:default">belum ada sumber yang seirisan</span>';
+  const gengHTML = s.g.length
+    ? s.g.map(k=>'<span style="cursor:default;border-left:3px solid '+GENG[k].color+'">'+esc(GENG[k].name)+'</span>').join('')
+    : '<span style="cursor:default">fondasi umum, belum diikat ke satu benang merah</span>';
+  const st = STAGES.find(x=>x.key === s.stage);
+  $('#modal').innerHTML =
+    '<button class="xbtn" data-close="1">×</button>'+
+    '<div class="code">'+s.id+'</div>'+
+    '<h3>'+esc(s.full)+'</h3>'+
+    '<div class="meta">'+esc(s.who)+' <span class="vb '+VMAP[s.v][0]+'">'+VLONG[s.v]+'</span>'+
+      '<span class="tag" style="background:#EDF1F7;color:#374151">'+st.step+' · '+st.name+'</span></div>'+
+    '<div class="block"><b>Bahasa sederhana</b>'+esc(s.say)+'</div>'+
+    (s.ilmiah ? '<div class="block"><b>Ringkasan akademik</b>'+esc(s.ilmiah)+'</div>' : '')+
+    '<div class="block"><b>Benang merah</b><div class="friends">'+gengHTML+'</div></div>'+
+    '<div class="block"><b>Sumber yang seirisan</b><div class="friends">'+friendsHTML+'</div></div>'+
+    '<div class="mlinks"><a class="btn" href="'+s.link+'" target="_blank" rel="noopener">Buka sumber</a>'+
+      (s.alt ? '<a class="btn gh" href="'+s.alt+'" target="_blank" rel="noopener">Tautan alternatif</a>' : '')+'</div>';
+  $('#modal').onclick = e=>{
+    if(e.target.dataset && e.target.dataset.close) return closeModal();
+    const sp = e.target.closest('span[data-id]');
+    if(sp) openModal(sp.dataset.id);
+  };
+  $('#modalbg').classList.add('show');
+}
+function closeModal(){ $('#modalbg').classList.remove('show'); }
+$('#modalbg').onclick = e=>{ if(e.target.id === 'modalbg') closeModal(); };
+document.addEventListener('keydown', e=>{ if(e.key === 'Escape'){ closeModal(); $('#dpanel').classList.remove('show'); } });
+
+/* ---------------- 11. DAFTAR SUMBER ---------------- */
+const PER = 20;
+const state = {page:1};
+function buildFilters(){
+  $('#fStage').innerHTML = '<option value="">Semua tahap</option>'+
+    STAGES.map(s=>'<option value="'+s.key+'">'+s.step+' · '+s.pendek+'</option>').join('');
+  $('#fGeng').innerHTML = '<option value="">Semua benang merah</option>'+
+    Object.entries(GENG).map(([k,g])=>'<option value="'+k+'">'+esc(g.kw)+'</option>').join('');
+  $('#fVerif').innerHTML = '<option value="">Semua status</option>'+
+    Object.keys(VLONG).map(v=>'<option value="'+v+'">'+VLONG[v]+'</option>').join('');
+  ['fStage','fGeng','fVerif'].forEach(id=>$('#'+id).onchange = ()=>{ state.page = 1; renderTable(); });
+  $('#fCari').oninput = ()=>{ state.page = 1; renderTable(); };
+  $('#fReset').onclick = ()=>{
+    $('#fStage').value = ''; $('#fGeng').value = ''; $('#fVerif').value = ''; $('#fCari').value = '';
+    state.page = 1; renderTable();
+  };
+  $('#topSearch').oninput = ()=>{
+    $('#fCari').value = $('#topSearch').value; state.page = 1; renderTable();
+    if(curPage !== 'sumber') go('sumber');
+  };
+}
+function filtered(){
+  const st = $('#fStage').value, gg = $('#fGeng').value, vv = $('#fVerif').value;
+  const q = ($('#fCari').value || '').trim().toLowerCase();
+  return S.filter(s=>{
+    if(st && s.stage !== st) return false;
+    if(gg && !s.g.includes(gg)) return false;
+    if(vv && s.v !== vv) return false;
+    if(q){
+      const hay = (s.id+' '+s.who+' '+s.full+' '+s.say+' '+(s.ilmiah||'')).toLowerCase();
+      if(hay.indexOf(q) < 0) return false;
+    }
+    return true;
+  }).sort((a,b)=>ST_ORDER[a.stage] - ST_ORDER[b.stage]);
+}
+function renderTable(){
+  const rows = filtered();
+  const pages = Math.max(1, Math.ceil(rows.length / PER));
+  if(state.page > pages) state.page = pages;
+  const slice = rows.slice((state.page-1)*PER, state.page*PER);
+  $('#tbody').innerHTML = slice.length ? slice.map(s=>{
+    const tags = s.g.length
+      ? s.g.map(k=>'<span class="tag" style="background:'+GENG[k].color+'1A;color:'+GENG[k].color+'">'+esc(GENG[k].kw)+'</span>').join(' ')
+      : '<span class="t2">fondasi umum</span>';
+    return '<tr>'+
+      '<td><span class="t2" style="font-weight:700">'+s.id+'</span></td>'+
+      '<td><span class="t1" data-open="'+s.id+'" style="cursor:pointer">'+esc(s.full)+'</span>'+
+        '<div class="t2">'+esc(s.who)+' — '+esc(s.say)+'</div></td>'+
+      '<td>'+ST_NAME[s.stage]+'</td>'+
+      '<td>'+tags+'</td>'+
+      '<td><span class="vb '+VMAP[s.v][0]+'">'+VMAP[s.v][1]+'</span></td>'+
+      '<td class="act"><a href="'+s.link+'" target="_blank" rel="noopener">Sumber</a>'+
+        (s.alt ? ' · <a href="'+s.alt+'" target="_blank" rel="noopener">Alt</a>' : '')+'</td>'+
+    '</tr>';
+  }).join('') : '<tr><td colspan="6"><div class="empty">Tidak ada sumber yang cocok dengan penyaring ini.</div></td></tr>';
+
+  $$('#tbody [data-open]').forEach(el=>el.onclick = ()=>openModal(el.dataset.open));
+
+  let ph = '<span>'+rows.length+' sumber</span>';
+  ph += '<button '+(state.page===1?'disabled':'')+' data-p="'+(state.page-1)+'">‹</button>';
+  for(let i=1;i<=pages;i++) ph += '<button class="'+(i===state.page?'on':'')+'" data-p="'+i+'">'+i+'</button>';
+  ph += '<button '+(state.page===pages?'disabled':'')+' data-p="'+(state.page+1)+'">›</button>';
+  $('#pager').innerHTML = ph;
+  $$('#pager button[data-p]').forEach(b=>b.onclick = ()=>{
+    const p = parseInt(b.dataset.p,10);
+    if(p >= 1 && p <= pages){ state.page = p; renderTable(); }
+  });
+}
+
+/* ---------------- 12. BERKAS RUJUKAN ----------------
+   Ubah nama, jenis, dan keterangan di sini bila perlu.            */
+const DOKUMEN = [
+ {id:'DOK-1', jenis:'Dokumen', ext:'PDF',
+  nama:'Singapore Wellbeing Scale',
+  isi:'Instrumen pengukuran wellbeing untuk konteks Singapura.',
+  kait:'Tahap 3 dan 4',
+  url:'https://cesgs-my.sharepoint.com/:b:/g/personal/general_cesgs_onmicrosoft_com/IQCSfv6V-qh6Qb3HA0VZcayuAcjTq3-LdMaMPkdlcgf96Yw?e=Mn6c9V'},
+ {id:'DOK-2', jenis:'Dokumen', ext:'PDF',
+  nama:'IFRS — human capital-related information',
+  isi:'Rujukan pengungkapan informasi terkait modal manusia dalam kerangka IFRS.',
+  kait:'Tahap 5',
+  url:'https://cesgs-my.sharepoint.com/:b:/g/personal/general_cesgs_onmicrosoft_com/IQDUssvmOsnhRJgB4yUXFZ5dAZrvIRINGeO9coF995IHbS4?e=zo6gwH'},
+ {id:'DOK-3', jenis:'Dokumen', ext:'PDF',
+  nama:'OECD Wellbeing Instrument',
+  isi:'Instrumen pengukuran wellbeing versi OECD.',
+  kait:'Tahap 3',
+  url:'https://cesgs-my.sharepoint.com/:b:/g/personal/general_cesgs_onmicrosoft_com/IQCbJPovJXZISIoh4No55NdaAQCPDk2Vs_vjq5tYXDVSi1k?e=8NosNe'},
+ {id:'DOK-4', jenis:'Dokumen', ext:'PDF',
+  nama:'Kajian Wellbeing CESGS',
+  isi:'Kajian internal CESGS yang menjadi latar penyusunan peta literatur ini.',
+  kait:'Seluruh tahap',
+  url:'https://cesgs-my.sharepoint.com/:b:/g/personal/general_cesgs_onmicrosoft_com/IQDqnItjZdR0QKGzdWc40SlHATfcbzxBbn1WcbhRMlOZEaQ?e=E4KNYf'},
+ {id:'PPR-1', jenis:'Paparan', ext:'Canva',
+  nama:'Framework Wellbeing',
+  isi:'Paparan kerangka wellbeing yang dipakai sebagai pijakan konsep.',
+  kait:'Tahap 1 dan 2',
+  url:'https://canva.link/mabgcwz6sjr0uvw'},
+ {id:'PPR-2', jenis:'Paparan', ext:'Canva',
+  nama:'Jawaban Pertanyaan Lawrence Loh',
+  isi:'Paparan jawaban atas pertanyaan tim riset untuk expert panel.',
+  kait:'Seluruh tahap',
+  url:'https://canva.link/a121ki5pz437uno'}
+];
+const JENIS_WARNA = {'Paparan':'#2563EB','Dokumen':'#64748B'};
+let fJenis = null;
+
+function buildBerkas(){
+  const host = $('#chipsBerkas');
+  const jenis = Array.from(new Set(DOKUMEN.map(d=>d.jenis)));
+  jenis.forEach(j=>{
+    const c = document.createElement('span');
+    c.className = 'chip'; c.dataset.j = j;
+    c.innerHTML = '<span class="dot" style="background:'+JENIS_WARNA[j]+'"></span>'+j+
+                  ' <span class="ct">'+DOKUMEN.filter(d=>d.jenis===j).length+'</span>';
+    c.onclick = ()=>{ fJenis = (fJenis === j) ? null : j; renderDoc(); };
+    host.appendChild(c);
+  });
+  const r = document.createElement('span');
+  r.className = 'chip ghost'; r.textContent = 'Tampilkan semua';
+  r.onclick = ()=>{ fJenis = null; renderDoc(); };
+  host.appendChild(r);
+  renderDoc();
+}
+function renderDoc(){
+  $$('#chipsBerkas .chip').forEach(c=>c.classList.toggle('on', !!c.dataset.j && c.dataset.j === fJenis));
+  const rows = DOKUMEN.filter(d=>!fJenis || d.jenis === fJenis);
+  $('#tbodyDoc').innerHTML = rows.length ? rows.map(d=>
+    '<tr>'+
+    '<td><span class="t2" style="font-weight:700">'+d.id+'</span></td>'+
+    '<td><span class="t1">'+esc(d.nama)+'</span><div class="t2">'+esc(d.isi)+'</div></td>'+
+    '<td><span class="tag" style="background:'+JENIS_WARNA[d.jenis]+'1A;color:'+JENIS_WARNA[d.jenis]+'">'+
+        d.jenis+' · '+d.ext+'</span></td>'+
+    '<td><span class="t2">'+esc(d.kait)+'</span></td>'+
+    '<td class="act"><a href="'+d.url+'" target="_blank" rel="noopener">Buka berkas</a></td>'+
+    '</tr>').join('')
+    : '<tr><td colspan="5"><div class="empty">Tidak ada berkas pada jenis ini.</div></td></tr>';
+}
+
+/* ---------------- 13. INISIALISASI ---------------- */
+buildRingkasan();
+buildChips($('#chipsAlur'));
+buildChips($('#chipsKaitan'));
+buildMap();
+buildThreads();
+buildFilters();
+renderTable();
+buildBerkas();
+buildGraph();
+$('#bd-sumber').textContent = S.length;
+$('#bd-kaitan').textContent = S.length;
+$('#bd-benang').textContent = Object.keys(GENG).length;
+$('#bd-alur').textContent   = STAGES.length;
+$('#bd-berkas').textContent = DOKUMEN.length;
+go('ringkasan');
+
+window.addEventListener('resize', ()=>{ drawLines(); if(cy) cy.resize(); });
+window.addEventListener('scroll', ()=>{ if(activeGeng && curPage === 'kaitan') drawLines(); }, {passive:true});
+const ms = document.querySelector('.mapscroll');
+if(ms) ms.addEventListener('scroll', drawLines, {passive:true});
+
+</script>
+</body>
+</html>
