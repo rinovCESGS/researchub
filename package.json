@@ -1,0 +1,15 @@
+{
+  "name": "research-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CESGS Research Hub. Flat layout: every file sits in the project root, except api/ which the hosting platform requires.",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node server.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
+  }
+}

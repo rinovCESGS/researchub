@@ -1,0 +1,7 @@
+# Working files that belong in the repository but do not need to be uploaded.
+# Do not add api here. That folder is the server layer, and removing it breaks
+# sign-in and every data call.
+source.html
+build.mjs
+README.md
+research-hub-appsscript.gs
