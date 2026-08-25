@@ -1,1 +1,10 @@
 
+# Files that do not need to be uploaded to Vercel.
+#
+# Careful: anything listed here is also invisible to the build. Keep build.mjs
+# and source.html out of this list if you set a Build Command in Vercel that
+# runs the build. With the bundles committed and no Build Command, both can be
+# excluded safely.
+README.md
+research-hub-appsscript.gs
+server.js
