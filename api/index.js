@@ -203,6 +203,56 @@ export async function handleRequest(req) {
     const action = String(input.action || '').trim();
     if (!action) return reply({ ok: false, error: 'No action given' });
 
+    /* ── diagnostics ──
+       Answers one question and only one: can this function reach Apps Script,
+       and if not, why. It never reveals the deployment id, the token or the
+       session secret, only whether they are present and well formed, so it is
+       safe to leave in place. Call it with {"action":"diag"}. */
+    if (action === 'diag') {
+      const raw = process.env.RH_GAS_URL || '';
+      const info = {
+        ok: true,
+        node: process.version,
+        sessionSecretSet: !!K.secret,
+        gasTokenSet: !!K.gasToken,
+        gasUrlSet: !!raw,
+        gasUrlLength: raw.length,
+        gasUrlTrimmedLength: raw.trim().length,
+        gasUrlHasWhitespace: /\s/.test(raw),
+        gasUrlHasQuotes: /["']/.test(raw)
+      };
+      try {
+        const u = new URL(K.gasUrl);
+        info.parsed = true;
+        info.host = u.host;
+        info.pathStart = u.pathname.slice(0, 14);
+        info.endsWithExec = u.pathname.endsWith('/exec');
+      } catch (e) {
+        info.parsed = false;
+        info.parseError = String(e && e.message || e);
+      }
+      if (info.parsed) {
+        const t0 = Date.now();
+        try {
+          const r = await fetch(K.gasUrl, {
+            method: 'POST', redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'ping', token: K.gasToken, v: 2 })
+          });
+          const text = await r.text();
+          info.fetchStatus = r.status;
+          info.fetchMs = Date.now() - t0;
+          info.replyLooksLikeJson = text.trim().startsWith('{');
+          info.replyFirst80 = text.trim().slice(0, 80);
+        } catch (e) {
+          info.fetchMs = Date.now() - t0;
+          info.fetchError = String(e && e.name || '') + ': ' + String(e && e.message || e);
+          if (e && e.cause) info.fetchCause = String(e.cause.code || e.cause.message || e.cause);
+        }
+      }
+      return reply(info);
+    }
+
     const user = unsign(readCookie(req.cookie, COOKIE_NAME), K.secret, K.sessionHours);
 
     /* ── sign in ── */
