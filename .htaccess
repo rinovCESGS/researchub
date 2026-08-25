@@ -1,4 +1,0 @@
-# Folder lampiran. Berkas hanya boleh diunduh, tidak boleh dijalankan.
-php_flag engine off
-AddType text/plain .php .php3 .phtml .pht .html .htm .shtml
-Options -Indexes
