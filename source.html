@@ -156,6 +156,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);-webkit-font-
 .textarea{height:auto;min-height:74px;padding:10px 13px;resize:vertical;line-height:1.5}
 .inp:focus,.textarea:focus,select.inp:focus{border-color:var(--blue)}
 .inp-label{display:block;font-size:11px;font-weight:700;color:var(--ink2);margin-bottom:5px}
+/* Kotak yang isinya dihitung sistem, bukan diketik. Warnanya sengaja dibuat
+   sedikit redup supaya terbaca sebagai hasil, bukan sebagai isian kosong. */
+.inp-auto{background:#F3F5FA;color:var(--ink2);font-weight:700;cursor:default}
+.inp-auto:focus{border-color:var(--line2)}
 .form-row{margin-bottom:12px}
 
 /* ═══ MINI CHIPS ═══ */
@@ -1652,6 +1656,7 @@ input[type=date],input[type=number]{color-scheme:dark}
         <option value="gap">Urut: kesenjangan terbesar</option>
         <option value="out">Urut: luaran terbanyak</option>
       </select>
+      <button class="btn btn-teal btn-sm" onclick="openGrantModal()">+ Tambah grant</button>
     </div>
   </div>
   <div class="money-grid" id="ctlKpi" style="margin-bottom:16px"></div>
@@ -1795,9 +1800,10 @@ input[type=date],input[type=number]{color-scheme:dark}
       <div class="helper-text" id="qpAkhir" style="margin:-2px 0 2px">—</div>
       <div class="qp-log" id="qpRiwayat"></div>
       <div class="mcard-row">
-        <select class="inp" id="qpStatus"></select>
+        <select class="inp" id="qpStatus" onchange="qpPersenSync()"></select>
         <input class="inp" id="qpPersen" type="number" min="0" max="100" placeholder="%">
       </div>
+      <div class="helper-text" id="qpPersenKet" style="margin:-2px 0 2px">Persentase mengikuti status.</div>
       <input class="inp" id="qpCatatan" placeholder="Catatan perkembangan (opsional)">
       <button class="btn btn-teal btn-sm" style="height:40px" onclick="qpSimpan()">Simpan update</button>
     </div>
@@ -2007,6 +2013,51 @@ input[type=date],input[type=number]{color-scheme:dark}
   <div class="rd-body" id="rdBody"></div>
 </aside>
 
+<div class="pmodal" id="grModal">
+  <div class="pmodal-card">
+    <div class="pmodal-title" id="grTitle">Tambah grant</div>
+    <div class="form-row"><label class="inp-label">Title</label>
+      <input class="inp" id="gTitle" placeholder="Nama project atau grant" autocomplete="off">
+      <div class="helper-text" id="gTitleKet" style="margin-top:5px">Judul ini menjadi nama project di seluruh dasbor. Baris riset menempel ke grant lewat kecocokan judul.</div></div>
+    <div class="form-row"><label class="inp-label">Project Lead <span style="color:var(--red,#D64545)">*</span></label>
+      <input class="inp" id="gLead" list="gOrangOpts" placeholder="Cari nama akun" autocomplete="off">
+      <datalist id="gOrangOpts"></datalist></div>
+    <div class="grid-2">
+      <div class="form-row"><label class="inp-label">Status</label><select class="inp" id="gStatus"></select></div>
+      <div class="form-row"><label class="inp-label">Division</label>
+        <input class="inp inp-auto" id="gDivisi" readonly tabindex="-1"></div>
+    </div>
+    <div class="helper-text" style="margin:-6px 0 12px">Division terkunci pada Fundamental Research, mengikuti divisi yang dilayani Research Hub.</div>
+    <div class="form-row"><label class="inp-label">Description</label><textarea class="textarea" id="gDesc" placeholder="Opsional"></textarea></div>
+    <div class="form-row"><label class="inp-label">Notes</label><textarea class="textarea" id="gNotes" placeholder="Catatan project..."></textarea></div>
+    <div class="grid-2">
+      <div class="form-row"><label class="inp-label">Funder</label><input class="inp" id="gFunder" placeholder="Opsional"></div>
+      <div class="form-row"><label class="inp-label">Budget (Rp)</label><input class="inp" id="gBudget" type="number" min="0" placeholder="0.00"></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-row"><label class="inp-label">Dashboard status</label><select class="inp" id="gDash"></select></div>
+      <div class="form-row"><label class="inp-label">File path (URL)</label><input class="inp" id="gFile" placeholder="Opsional"></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-row"><label class="inp-label">Submission Date</label><input class="inp" id="gSubDate" type="date"></div>
+      <div class="form-row"><label class="inp-label">Decision Date</label><input class="inp" id="gDecDate" type="date"></div>
+    </div>
+    <div class="rd-sec" style="margin-top:4px">Khusus Research Hub</div>
+    <div class="helper-text" style="margin:-4px 0 10px">Tiga isian berikut tidak ada di formulir Project Hub. Isian ini yang menghidupkan saringan dan angka serapan di Grant Control.</div>
+    <div class="grid-2">
+      <div class="form-row"><label class="inp-label">Tipe</label><select class="inp" id="gTipe"></select></div>
+      <div class="form-row"><label class="inp-label">Tahun</label><input class="inp" id="gTahun" type="number" placeholder="2026"></div>
+    </div>
+    <div class="form-row"><label class="inp-label">Sudah cair (Rp)</label><input class="inp" id="gCair" type="number" min="0" placeholder="0">
+      <div class="helper-text" id="gDanaKet" style="margin-top:5px">Begitu Budget diisi, angka itu yang dipakai pada kartu dan kolom dana di baris riset tidak lagi dijumlahkan.</div></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn btn-red btn-sm" id="gHapus" style="margin-right:auto;display:none" onclick="hapusGrant()">Hapus grant</button>
+      <button class="btn btn-ghost" onclick="closeGrantModal()">Cancel</button>
+      <button class="btn btn-teal" onclick="saveGrant()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="pmodal" id="luModal">
   <div class="pmodal-card">
     <div class="pmodal-title">Tambah luaran</div>
@@ -2196,7 +2247,7 @@ const SEED = [];
 /* ══════════════════ STATE & PENYIMPANAN ══════════════════ */
 const LSKEY = 'cesgs_rh_dash_v2';
 const S = { page:'ringkasan', f:{ty:[],th:[],ds:[],pj:[],st:[],tg:[]}, sort:{k:'id',d:1}, pg:1, ctl:'dana', editing:null };
-let EX = { outputs:[], edits:{}, added:[], deleted:[], coords:{}, prog:{}, ref:{ds:[],pj:[],pr:[],mitra:[]}, tugas:[], milestone:[], korespondensi:[], dokumen:[], akun:[], user:null, source:null, mapping:null, sheet:null, sheetHeaders:null, fetchedAt:null, api:{url:'',token:'',auto:true,syncedAt:null,pending:false} };
+let EX = { outputs:[], edits:{}, added:[], deleted:[], coords:{}, prog:{}, ref:{ds:[],pj:[],pr:[],mitra:[]}, tugas:[], milestone:[], korespondensi:[], dokumen:[], akun:[], grant:[], user:null, source:null, mapping:null, sheet:null, sheetHeaders:null, fetchedAt:null, api:{url:'',token:'',auto:true,syncedAt:null,pending:false} };
 try { const raw = localStorage.getItem(LSKEY); if (raw) EX = Object.assign(EX, JSON.parse(raw)); } catch(e){}
 let SAVE_TIMER = null, SAVE_DIRTY = false;
 function flushSave(){
@@ -2213,7 +2264,7 @@ function save(segera){
   try{ scheduleSync(); }catch(e){}
 }
 function resetLocal(){ if(!confirm('Hapus SEMUA perubahan lokal (riset baru, suntingan, penghapusan, luaran, koordinat, sumber data)?')) return;
-  EX = { outputs:[], edits:{}, added:[], deleted:[], coords:{}, prog:{}, tomb:{}, tombIgnore:{}, ref:{ds:[],pj:[],pr:[],mitra:[]}, tugas:[], milestone:[], korespondensi:[], dokumen:[], akun:[], user:null, source:null, mapping:null, sheet:null, sheetHeaders:null, fetchedAt:null, api:{url:'',token:'',auto:true,syncedAt:null,pending:false} };
+  EX = { outputs:[], edits:{}, added:[], deleted:[], coords:{}, prog:{}, tomb:{}, tombIgnore:{}, ref:{ds:[],pj:[],pr:[],mitra:[]}, tugas:[], milestone:[], korespondensi:[], dokumen:[], akun:[], grant:[], user:null, source:null, mapping:null, sheet:null, sheetHeaders:null, fetchedAt:null, api:{url:'',token:'',auto:true,syncedAt:null,pending:false} };
   save(true); rebuild(); renderAll(); toast('Data lokal dikosongkan'); }
 
 /* ══════════════════ HELPERS ══════════════════ */
@@ -2350,12 +2401,95 @@ function pgBar(k, total, label){
 }
 function slug(t){ return String(t||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,64) || 'x'; }
 
-const DONE_STATUS = ['Published'];
+/* ══════════ STATUS DAN BOBOT PERSENTASE ══════════
+   Angka progres tidak lagi diketik tangan. Setiap status membawa satu bobot
+   baku, jadi dua orang yang melaporkan tahap yang sama menuliskan angka yang
+   sama dan perbandingan antar paper jadi berarti. Urutan kunci pada peta ini
+   sekaligus menjadi urutan pilihan pada semua dropdown status.
+   Bila suatu saat persentase ingin bisa disunting lagi, ubah PERSEN_MANUAL
+   menjadi true dan sisa kodenya tidak perlu disentuh. */
+const PERSEN_MANUAL = false;
+const STATUS_PROG = {
+  'Pitching Research': 5,
+  'Data Collection': 15,
+  'Data Analysis': 25,
+  'Working Paper': 50,
+  'Journal Selection & Formatting': 53,
+  'Rejected': 53,
+  'Ready to Submit': 55,
+  'Submission SINTA': 60,
+  'Submission SCOPUS': 60,
+  'Under Review': 70,
+  'R1 Revision': 73,
+  'R2 Revision': 76,
+  'R3 Revision': 79,
+  'R4 Revision': 82,
+  'Accepted': 85,
+  'Proofread by Journal': 88,
+  'Published': 94,
+  'AIP & Logbook': 96,
+  'IPKI': 98,
+  'Closed': 100
+};
+/* Label lama yang terlanjur tersimpan di spreadsheet tetap dikenali, supaya
+   baris lama ikut memperoleh bobot tanpa harus disunting satu per satu.
+   Nilai kosong berarti status itu memang belum punya bobot. */
+const STATUS_ALIAS = {
+  'Ide Baru':'Pitching Research', 'Pitching':'Pitching Research',
+  'Belum Ada Status':'',
+  /* Penomoran revisi digeser satu tingkat. Daftar lama dimulai dari R0
+     sedangkan daftar baru dimulai dari R1, jadi revisi pertama tetap terbaca
+     sebagai revisi pertama dan bukan turun setengah tahap. */
+  'R0. Revision':'R1 Revision', 'R0 Revision':'R1 Revision',
+  'R1. Revision':'R2 Revision',
+  'R2. Revision':'R3 Revision',
+  'R3. Revision':'R4 Revision',
+  'R4. Revision':'R4 Revision',
+  /* Label tahap untuk luaran non-artikel dipetakan ke padanan terdekat pada
+     skala baru, supaya buku dan purwarupa memakai angka yang sama. */
+  'Rencana':'Pitching Research', 'Dikerjakan':'Working Paper',
+  'Menunggu Review':'Under Review', 'Selesai':'Closed'
+};
+/** Nama status baku dari sebuah tulisan bebas, string kosong bila tak dikenal. */
+function statusBaku(s){
+  const t = String(s == null ? '' : s).trim();
+  if(STATUS_PROG[t] != null) return t;
+  const a = STATUS_ALIAS[t];
+  return a == null ? '' : a;
+}
+/** Bobot baku sebuah status, null bila statusnya tidak dikenali. */
+function progDariStatus(s){
+  const t = statusBaku(s);
+  return t && STATUS_PROG[t] != null ? STATUS_PROG[t] : null;
+}
+/** Angka yang ditulis ke riwayat. Bobot status bila dikenali, kalau tidak
+    angka terakhir yang pernah tercatat, kalau tidak juga nol. */
+function persenUntuk(st, it, manual){
+  if(PERSEN_MANUAL) return Math.max(0, Math.min(100, +manual || 0));
+  const p = progDariStatus(st);
+  if(p != null) return p;
+  const lama = it ? progTercatat(it) : null;
+  return lama == null ? 0 : lama;
+}
+/* Terbit dihitung sejak status Published, termasuk tiga tahap administrasi
+   sesudahnya, supaya jumlah publikasi tidak justru turun ketika sebuah paper
+   maju ke AIP, IPKI, lalu Closed. */
+const DONE_STATUS = ['Published','AIP & Logbook','IPKI','Closed'];
+const STAGE_DARI_STATUS = {
+  'Pitching Research':'rencana',
+  'Data Collection':'kerja', 'Data Analysis':'kerja', 'Working Paper':'kerja',
+  'Journal Selection & Formatting':'kerja', 'Rejected':'kerja', 'Ready to Submit':'kerja',
+  'Submission SINTA':'tunggu', 'Submission SCOPUS':'tunggu', 'Under Review':'tunggu',
+  'R1 Revision':'tunggu', 'R2 Revision':'tunggu', 'R3 Revision':'tunggu', 'R4 Revision':'tunggu',
+  'Accepted':'tunggu', 'Proofread by Journal':'tunggu',
+  'Published':'selesai', 'AIP & Logbook':'selesai', 'IPKI':'selesai', 'Closed':'selesai'
+};
 function stageOf(r){
   const s = r.st || '';
-  if (s === 'Published') return 'selesai';
-  if (/^Submission|Revision|Accepted/.test(s)) return 'tunggu';
-  if (s === 'Ide Baru' || s === 'Belum Ada Status') return 'rencana';
+  const baku = statusBaku(s);
+  if(baku && STAGE_DARI_STATUS[baku]) return STAGE_DARI_STATUS[baku];
+  if (/^Submission|Revision|Accepted|Under Review/.test(s)) return 'tunggu';
+  if (s === '' || s === 'Belum Ada Status') return 'rencana';
   return 'kerja';
 }
 const STAGES = [
@@ -2365,7 +2499,9 @@ const STAGES = [
   {k:'selesai', l:'Selesai / Terbit', c:'var(--green)', cls:'a-published'}
 ];
 const CUSTOM_STAGE = {'Rencana':'rencana','Dikerjakan':'kerja','Menunggu Review':'tunggu','Selesai':'selesai'};
-const STATUS_OPT = ['Ide Baru','Data Collection','Data Analysis','Working Paper','Ready to Submit','Submission SINTA','Submission SCOPUS','R0. Revision','R1. Revision','R2. Revision','R3. Revision','Accepted','Published','Rejected','Belum Ada Status'];
+/* Satu sumber kebenaran: daftar pilihan status persis mengikuti urutan pada
+   STATUS_PROG, jadi menambah status baru cukup dilakukan di satu tempat. */
+const STATUS_OPT = Object.keys(STATUS_PROG).concat(['Belum Ada Status']);
 
 /* ══════════════════ LAPISAN DATA ══════════════════ */
 let RAW = [], OPT = {};
@@ -3260,8 +3396,48 @@ function comboVal(id){
   const hit = matchExisting(raw, COMBO_SRC[id] ? COMBO_SRC[id]() : []);
   return hit || raw;
 }
+/* ══════ PEMILIH PROJECT PADA FORMULIR RISET ══════
+   Alurnya dibalik: grant dicatat lebih dulu di Grant Control, baru papernya
+   didaftarkan di bawahnya. Karena itu isian project di sini bukan lagi kotak
+   bebas, melainkan daftar tertutup. Kotak bebas yang lama membuat satu grant
+   yang sama tertulis dengan tiga ejaan berbeda lalu pecah jadi tiga kartu.
+
+   Nama project yang sudah terlanjur ada di lembar riset tetap ikut ditawarkan
+   meski grant-nya belum pernah dicatat, kalau tidak seluruh baris lama akan
+   terkunci dan tidak bisa disunting sampai semua grant-nya dibuatkan dulu. */
+/** Semua nama project yang sah, judul grant lebih dulu lalu nama lama. */
+function projectSemua(){
+  const grant = uniq(grantJudul()).sort();
+  const kunci = {}; grant.forEach(n=>{ kunci[grantKunci(n)] = 1; });
+  const lama = uniq((OPT.pr||[]).filter(n=>n && n!=='Tanpa Project' && !kunci[grantKunci(n)])).sort();
+  return {grant, lama, semua: grant.concat(lama)};
+}
+function projectPickHTML(nilai){
+  const {grant, lama, semua} = projectSemua();
+  const kini = String(nilai||'');
+  const dikenal = semua.some(n=>n===kini) || kini==='Tanpa Project';
+  const opt = n=>'<option'+(n===kini?' selected':'')+'>'+esc(n)+'</option>';
+  /* Susunannya meniru comboHTML supaya comboToggle, comboCheck, dan comboVal
+     yang sudah ada bisa dipakai apa adanya: select ber-id rPr, kotak teks
+     rPr_new, dan baris peringatan rPr_warn. */
+  return '<div style="display:flex;gap:8px">'+
+    '<select class="inp" id="rPr" onchange="comboToggle(\'rPr\')" style="flex:1">'+
+      '<option value=""'+(kini===''?' selected':'')+'>\u2014 pilih \u2014</option>'+
+      (grant.length ? '<optgroup label="Grant terdaftar">'+grant.map(opt).join('')+'</optgroup>' : '')+
+      (lama.length  ? '<optgroup label="Project tanpa catatan grant">'+lama.map(opt).join('')+'</optgroup>' : '')+
+      '<optgroup label="Tanpa grant">'+
+        '<option'+(kini==='Tanpa Project'?' selected':'')+'>Tanpa Project</option>'+
+        '<option value="__new"'+(kini && !dikenal?' selected':'')+'>+ project baru tanpa grant\u2026</option>'+
+      '</optgroup>'+
+    '</select>'+
+    '<input class="inp" id="rPr_new" placeholder="Nama project tanpa grant" value="'+esc(dikenal?'':kini)+
+      '" style="flex:1;display:'+(kini && !dikenal?'block':'none')+'" oninput="comboCheck(\'rPr\')">'+
+  '</div>'+
+  '<div class="helper-text" id="rPr_warn" style="display:none;color:var(--amber);margin-top:5px"></div>'+
+  '<div class="helper-text" style="margin-top:5px">Project yang berdana sebaiknya dicatat dulu lewat Tambah grant di Grant Control supaya angkanya ikut terpantau. Paper tanpa hibah tetap bisa memakai Tanpa Project atau nama sendiri.</div>';
+}
 const COMBO_SRC = {
-  rDs: ()=>OPT.ds||[], rPj: ()=>OPT.pj||[], rPr: ()=>OPT.pr||[],
+  rDs: ()=>OPT.ds||[], rPj: ()=>OPT.pj||[], rPr: ()=>projectSemua().semua,
   rSt: ()=>uniq(STATUS_OPT.concat(OPT.st||[])),
   rTg: ()=>uniq((OPT.tg||[]).concat(['Q1','Q2','Q3','Top Tier','Scopus','SINTA 2','Belum Ditentukan']))
 };
@@ -3326,7 +3502,7 @@ function openRiset(key){
   $('box_rAg').innerHTML = picboxHTML('rAg', picOpts(r&&r.anggota), r&&r.anggota, 'Cari atau ketik nama baru…');
   picSync('rAg');
   $('box_rSt').innerHTML = comboHTML('rSt', COMBO_SRC.rSt(), r?r.st:'Ide Baru', 'Status baru');
-  $('box_rPr').innerHTML = comboHTML('rPr', OPT.pr, r&&r.pr, 'Nama project baru');
+  $('box_rPr').innerHTML = projectPickHTML(r&&r.pr);
   $('box_rTg').innerHTML = comboHTML('rTg', COMBO_SRC.rTg(), r?r.tg:'Belum Ditentukan', 'Target baru');
   v('rJ', r&&r.j); v('rTy', r?r.ty:'Skema');
   v('rTh', r&&r.th); v('rJn', r&&r.jn);
@@ -3511,7 +3687,13 @@ function statusOf(it){
   const e = logAkhir(it);
   return (e && e.st) ? e.st : it.status;
 }
+/* Angka yang ditampilkan selalu diturunkan dari status terakhir, bukan dari
+   angka yang tersimpan. Dengan begitu baris lama yang dulu diisi tangan ikut
+   rapi tanpa perlu migrasi data di spreadsheet. Angka tersimpan hanya dipakai
+   sebagai cadangan ketika statusnya belum dikenali. */
 function progOf(it){
+  const auto = PERSEN_MANUAL ? null : progDariStatus(statusOf(it));
+  if(auto != null) return auto;
   const p = progTercatat(it);
   return p == null ? defaultProg(it.stage) : p;
 }
@@ -3521,6 +3703,17 @@ function logOf(it){
   return ((EX.prog||{})[it.key]||{}).log || [];
 }
 function lastUpd(it){ const l=logOf(it); return l.length ? l[l.length-1].d : null; }
+/* Terbit belum berarti selesai. Sesudah Published masih ada AIP & Logbook,
+   IPKI, lalu Closed, dan justru ekor administrasi itulah yang paling sering
+   tertinggal. Maka pengingat 14 hari memakai ukuran ini, bukan tahap Selesai,
+   sehingga sebuah paper baru berhenti ditagih setelah statusnya Closed.
+   Luaran yang statusnya tidak dikenali tetap mengikuti tahapnya, supaya baris
+   lama yang isinya kacau tidak ikut ditagih selamanya. */
+function luaranTuntas(it){
+  const baku = statusBaku(statusOf(it));
+  if(baku) return baku === 'Closed';
+  return it.stage === 'selesai';
+}
 function daysSince(d){
   if(!d) return null;
   const t = new Date(d).getTime();
@@ -3529,7 +3722,7 @@ function daysSince(d){
 }
 function itemUid(i){ return i.kind+'_'+(i.kind==='cus'?i.id:i.key); }
 function itemByUid(uid){ return luaranItems().find(i=>itemUid(i)===uid); }
-const STAGE_STATUS = {rencana:'Ide Baru', kerja:'Working Paper', tunggu:'Submission SCOPUS', selesai:'Published'};
+const STAGE_STATUS = {rencana:'Pitching Research', kerja:'Working Paper', tunggu:'Under Review', selesai:'Published'};
 const STAGE_STATUS_CUS = {rencana:'Rencana', kerja:'Dikerjakan', tunggu:'Menunggu Review', selesai:'Selesai'};
 
 function setLgStage(v){ LG.stage=v; try{ saveUI(); }catch(e){} renderLuaran(); }
@@ -3595,13 +3788,13 @@ function renderLuaran(){
   }
   const semua = luaranItems().filter(i=>luaranMilik(i, sayaLg));
   const all = semua.filter(i => msHas('lgProject', i.project) && tipeOk('lgTipe', i.project, i.nama));
-  const stale = all.filter(i=>{ const d=daysSince(lastUpd(i)); return i.stage!=='selesai' && (d===null || d>14); }).length;
+  const stale = all.filter(i=>{ const d=daysSince(lastUpd(i)); return !luaranTuntas(i) && (d===null || d>14); }).length;
   const done = all.filter(i=>i.stage==='selesai').length;
   const avg = all.length ? Math.round(all.reduce((s,i)=>s+progOf(i),0)/all.length) : 0;
   const luar = all.filter(i=>i.stage==='tunggu').length;
   $('lgStats').innerHTML =
     '<div class="pstat-card ps-blue"><div class="pstat-num">'+all.length+'</div><div class="pstat-label">Luaran terdaftar</div><div class="pstat-sub">'+esc(lgProjectSub())+'</div></div>'+
-    '<div class="pstat-card ps-gold"><div class="pstat-num"'+(stale?' style="color:#D64545"':'')+'>'+stale+'</div><div class="pstat-label">Perlu diperbarui</div><div class="pstat-sub">tanpa kabar lebih dari 14 hari</div></div>'+
+    '<div class="pstat-card ps-gold"><div class="pstat-num"'+(stale?' style="color:#D64545"':'')+'>'+stale+'</div><div class="pstat-label">Perlu diperbarui</div><div class="pstat-sub">tanpa kabar lebih dari 14 hari, sampai Closed</div></div>'+
     '<div class="pstat-card ps-purple"><div class="pstat-num">'+luar+'</div><div class="pstat-label">Di pihak luar</div><div class="pstat-sub">menunggu editor atau pemberi dana</div></div>'+
     '<div class="pstat-card ps-teal"><div class="pstat-num">'+done+'</div><div class="pstat-label">Sudah tuntas</div><div class="pstat-sub">rerata progres '+avg+'%</div></div>';
 
@@ -3630,7 +3823,7 @@ function renderLuaran(){
 function moveStage(uid, stage){
   const i = itemByUid(uid); if(!i || i.stage===stage) return;
   const st = i.kind==='cus' ? STAGE_STATUS_CUS[stage] : STAGE_STATUS[stage];
-  writeProgress(uid, {st, p: defaultProg(stage), d: new Date().toISOString().slice(0,10),
+  writeProgress(uid, {st, p: persenUntuk(st, i), d: new Date().toISOString().slice(0,10),
     t: 'Dipindah ke tahap '+STAGES.find(s=>s.k===stage).l});
   toast(i.nama.slice(0,38)+' → '+STAGES.find(s=>s.k===stage).l);
 }
@@ -4186,7 +4379,12 @@ function renderKorPage(){
 function renderLuaranDrawer(){
   const i = itemByUid(LG.open); if(!i) return;
   const st = STAGES.find(s=>s.k===i.stage), pr = progOf(i), lg = logOf(i), d = daysSince(lastUpd(i));
-  const opts = i.kind==='cus' ? Object.keys(CUSTOM_STAGE) : uniq(STATUS_OPT.concat(OPT.st||[]));
+  /* Status yang sedang berlaku selalu ikut masuk daftar pilihan, termasuk label
+     lama yang sudah tidak dipakai lagi, supaya dropdown tidak diam-diam
+     memindahkan sebuah paper ke status pertama ketika lacinya dibuka. */
+  const stKini = statusOf(i);
+  const opts = uniq((i.kind==='cus' ? Object.keys(CUSTOM_STAGE) : STATUS_OPT.concat(OPT.st||[]))
+    .concat(stKini ? [stKini] : []));
   const cur = STAGES.findIndex(x=>x.k===i.stage);
   $('rdEye').textContent = i.project+' · '+i.jenis;
   $('rdTitle').textContent = i.nama;
@@ -4198,9 +4396,13 @@ function renderLuaranDrawer(){
   h += blokPenulis(i);
   h += blokKorespondensi(i);
   h += '<div class="rd-sec">Perbarui progres</div>'+
-    '<div class="grid-2"><div class="form-row"><label class="inp-label">Status</label><select class="inp" id="u_st">'+
-      opts.map(o=>'<option'+(o===i.status?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select></div>'+
-    '<div class="form-row"><label class="inp-label">Progres (%)</label><input class="inp" type="number" min="0" max="100" id="u_pr" value="'+pr+'"></div></div>'+
+    '<div class="grid-2"><div class="form-row"><label class="inp-label">Status</label><select class="inp" id="u_st" onchange="uPrSync()">'+
+      opts.map(o=>'<option'+(o===statusOf(i)?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select></div>'+
+    '<div class="form-row"><label class="inp-label">Progres (%)</label>'+
+      (PERSEN_MANUAL
+        ? '<input class="inp" type="number" min="0" max="100" id="u_pr" value="'+pr+'">'
+        : '<input class="inp inp-auto" id="u_pr" value="'+pr+'" readonly tabindex="-1">')+'</div></div>'+
+    (PERSEN_MANUAL ? '' : '<div class="helper-text" style="margin:-6px 0 12px">Persentase mengikuti status dan terisi sendiri, jadi angkanya seragam untuk semua paper pada tahap yang sama.</div>')+
     '<div class="form-row"><label class="inp-label">Tanggal</label><input class="inp" type="date" id="u_dt" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
     '<div class="form-row"><label class="inp-label">Catatan perkembangan</label>'+
       '<div class="mention-wrap"><textarea class="textarea" id="u_nt" placeholder="Contoh: @Zayyan mengerjakan revisi minor sebelum dikirim ke editor" '+
@@ -4219,11 +4421,21 @@ function renderLuaranDrawer(){
     : '<div class="empty-state">Belum ada catatan progres.</div>');
   $('rdBody').innerHTML = h;
 }
+/* Kotak persen di laci hanya menampilkan hasil, isinya disegarkan tiap kali
+   status dipindah supaya yang menulis update melihat angkanya sebelum simpan. */
+function uPrSync(){
+  if(PERSEN_MANUAL) return;
+  const el = $('u_pr'), sel = $('u_st'); if(!el || !sel) return;
+  const p = progDariStatus(sel.value);
+  el.value = p == null ? '' : p;
+  el.placeholder = p == null ? 'status belum berbobot' : '%';
+}
 function saveUpd(){
   if(!LG.open) return;
   const nota = $('u_nt').value.trim();
   const sb = sebutDari(nota);
-  writeProgress(LG.open, {st: $('u_st').value, p: Math.max(0, Math.min(100, +$('u_pr').value||0)),
+  const st = $('u_st').value;
+  writeProgress(LG.open, {st: st, p: persenUntuk(st, itemByUid(LG.open), $('u_pr').value),
     d: $('u_dt').value || new Date().toISOString().slice(0,10), t: nota, sb: sb,
     by: (curUser()||{}).name || '', ts: new Date().toISOString()});
   toast(sb.length ? 'Progres diperbarui, '+sb.length+' rekan ditandai' : 'Progres diperbarui');
@@ -4253,10 +4465,10 @@ function writeProgress(uid, entry){
    dihapus dicatat di EX.tomb supaya (a) tidak hidup lagi ketika data ditarik
    ulang dari spreadsheet, (b) perintah hapusnya ikut terkirim ke Apps Script,
    dan (c) masih bisa dipulihkan selama masa tenggang. */
-const TOMB_KEYS  = ['riset','luaran','tugas','milestone','dokumen','akun','komentar','korespondensi'];
+const TOMB_KEYS  = ['riset','luaran','tugas','milestone','dokumen','akun','komentar','korespondensi','grant'];
 const TOMB_LABEL = {riset:'Riset', luaran:'Luaran', tugas:'Tugas', milestone:'Milestone',
                     dokumen:'Dokumen', akun:'Akun', komentar:'Komentar',
-                    korespondensi:'Bukti korespondensi'};
+                    korespondensi:'Bukti korespondensi', grant:'Grant'};
 const TOMB_TTL_DAYS = 90;
 function tombs(){ EX.tomb = EX.tomb || {}; TOMB_KEYS.forEach(k=>{ EX.tomb[k] = EX.tomb[k] || {}; }); return EX.tomb; }
 function tombAdd(kind, uid, label, files, rec){
@@ -4384,8 +4596,28 @@ const STORES = {
   korespondensi: {sheet:'RH_Korespondensi', cols:['uid','target_uid','urut','perihal','tanggal','tautan','berkas','catatan']},
   dokumen:   {sheet:'RH_Dokumen',   cols:['uid','project','nama','kategori','pemilik','tautan','oleh','tanggal','berkas','diubah']},
   akun:      {sheet:'RH_Akun',      cols:['uid','email','nama','peran','sandi','aktif','foto']},
-  komentar:  {sheet:'RH_Komentar',  cols:['uid','target_kind','target_uid','jenis','oleh','email','teks','tautan','berkas','waktu','diubah']}
+  komentar:  {sheet:'RH_Komentar',  cols:['uid','target_kind','target_uid','jenis','oleh','email','teks','tautan','berkas','waktu','diubah']},
+  /* Catatan hibah. Sampai sekarang sebuah grant tidak pernah berwujud baris
+     tersendiri, ia hanya muncul karena ada baris riset yang memakai nama
+     project itu, dan nilai kontraknya dijumlahkan dari kolom dana pada tiap
+     baris riset. Akibatnya hibah yang baru turun tidak bisa dicatat sebelum
+     papernya ada. Lembar ini menampung kontraknya sendiri, dan tetap
+     tersambung ke baris riset lewat kecocokan nama project. */
+  /* Tiga belas kolom pertama sengaja memakai nama dan makna yang sama persis
+     dengan formulir New Project di Project Hub, supaya nanti penyambungan API
+     tinggal memetakan kolom ke kolom tanpa penerjemahan. Empat kolom sesudahnya
+     adalah tambahan khusus Research Hub yang tidak punya padanan di sana. */
+  grant:     {sheet:'RH_Grant',     cols:['uid','title','project_lead','status','division','description','notes','funder','budget','dashboard_status','file_path','submission_date','decision_date','tipe','tahun','cair','dibuat','dibuat_oleh','dibuat_email']}
 };
+/* ══════ NILAI BAKU FORMULIR GRANT ══════
+   Tiga daftar ini harus sama persis dengan enum di Project Hub, sebab keduanya
+   akan dibandingkan sebagai teks ketika API disambungkan. Kalau di sana
+   daftarnya berbeda, ubah di sini saja dan sisa kodenya ikut menyesuaikan. */
+const GRANT_STATUS  = ['Submitted','In Progress','Granted','On Hold','Rejected'];
+const GRANT_DASH    = ['Active','Inactive'];
+/* Research Hub hanya melayani satu divisi, jadi isian Division dikunci dan
+   tidak pernah menjadi pilihan. Di Project Hub nilainya mengikuti divisi akun. */
+const GRANT_DIVISI  = 'Fundamental Research';
 const PRIORITAS = ['Tinggi','Sedang','Rendah'];
 const TUGAS_STATUS = ['Belum mulai','Dikerjakan','Revisi','Dikumpulkan','Selesai'];
 const MS_JENIS = ['Laporan Kemajuan','Laporan Akhir','Submission','Monev','Seminar','Lainnya'];
@@ -4467,7 +4699,7 @@ function paperOpts(){
   const dari = RAW.map(r=>r.j).concat((EX.outputs||[]).filter(o=>o.jenis==='Artikel').map(o=>o.nama));
   return uniq(dari.filter(Boolean)).sort();
 }
-function projectOpts(){ return uniq(RAW.map(r=>r.pr).concat(recs('tugas').map(t=>t.project), recs('milestone').map(m=>m.project))).filter(Boolean).sort(); }
+function projectOpts(){ return uniq(grantJudul().concat(RAW.map(r=>r.pr), recs('tugas').map(t=>t.project), recs('milestone').map(m=>m.project))).filter(Boolean).sort(); }
 function orangOpts(){ const u=curUser(); return uniq((OPT.pj||[]).concat(OPT.ds||[], recs('akun').map(a=>a.nama), u?[u.name]:[])).filter(Boolean).sort(); }
 /* ---------- penanggung jawab jamak ----------
    Satu tugas boleh dipegang beberapa orang. Nilainya tetap satu kolom pic di
@@ -5432,7 +5664,7 @@ function salamJam(){
   return j < 11 ? 'Selamat pagi' : j < 15 ? 'Selamat siang' : j < 19 ? 'Selamat sore' : 'Selamat malam';
 }
 function luaranPerluUpdate(){
-  return luaranItems().filter(i=>{ const d = daysSince(lastUpd(i)); return i.stage!=='selesai' && (d===null || d>14); });
+  return luaranItems().filter(i=>{ const d = daysSince(lastUpd(i)); return !luaranTuntas(i) && (d===null || d>14); });
 }
 /* Kotak aksi cepat: satu luaran dipilih, statusnya dan persennya langsung
    diisi di beranda, lalu ditulis lewat jalur progres yang sama dengan laci
@@ -5458,17 +5690,28 @@ function qpIsi(){
   $('qpNote').innerHTML = n ? '<b>'+n+'</b> luaran belum diperbarui 14 hari terakhir'
     : 'Semua luaran terpantau mutakhir';
 }
+function qpPersenSync(){
+  const el = $('qpPersen'), sel = $('qpStatus'), ket = $('qpPersenKet');
+  if(!el || !sel) return;
+  if(PERSEN_MANUAL){ el.readOnly = false; el.classList.remove('inp-auto');
+    if(ket) ket.style.display = 'none'; return; }
+  const p = progDariStatus(sel.value);
+  el.readOnly = true; el.tabIndex = -1; el.classList.add('inp-auto');
+  el.value = p == null ? '' : p;
+  el.placeholder = p == null ? 'belum berbobot' : '%';
+  if(ket) ket.textContent = p == null
+    ? 'Status ini belum punya bobot baku, angka lama dipertahankan.'
+    : 'Persentase mengikuti status, terisi sendiri.';
+}
 function qpPilih(){
   const i = itemByUid(QP.uid); if(!i) return;
   const st = statusOf(i);
   const opts = uniq((i.kind==='cus' ? Object.keys(CUSTOM_STAGE) : STATUS_OPT.concat(OPT.st||[])).concat(st?[st]:[]));
   $('qpStatus').innerHTML = opts.map(o=>'<option'+(o===st?' selected':'')+'>'+esc(o)+'</option>').join('');
-  /* Kotak persen dibiarkan kosong bila belum pernah ada isian. Sebelumnya
-     terisi angka tebakan menurut tahap, dan angka itu ikut tersimpan sebagai
-     fakta begitu tombol simpan ditekan tanpa disentuh. */
-  const p = progTercatat(i);
-  $('qpPersen').value = p == null ? '' : p;
-  $('qpPersen').placeholder = p == null ? 'belum ada' : '%';
+  /* Kotak persen bukan lagi isian, melainkan cerminan status yang dipilih.
+     Sebelumnya angkanya diketik sendiri sehingga tahap yang sama bisa dilaporkan
+     40 persen oleh satu orang dan 65 persen oleh yang lain. */
+  qpPersenSync();
   const e = logAkhir(i), d = lastUpd(i);
   if($('qpAkhir')) $('qpAkhir').textContent = e
     ? 'Terakhir ' + fmtDate(d) + ' · ' + (e.st || '—') + (e.p != null ? ' · ' + e.p + '%' : '') + (e.by ? ' · ' + e.by : '')
@@ -5525,10 +5768,9 @@ function qpAmbil(uid){ QP.uid = uid; qpTutup(); qpIsi(); }
 function qpSimpan(){
   const uid = QP.uid, i = itemByUid(uid);
   if(!i){ toast('Pilih luaran dulu'); return; }
-  const isi = String($('qpPersen').value || '').trim();
-  const lama = progTercatat(i);
-  const p = isi === '' ? (lama == null ? 0 : lama) : Math.max(0, Math.min(100, +isi || 0));
-  writeProgress(uid, {st:$('qpStatus').value, p:p,
+  const st = $('qpStatus').value;
+  const p = persenUntuk(st, i, $('qpPersen').value);
+  writeProgress(uid, {st:st, p:p,
     d:new Date().toISOString().slice(0,10), t:String($('qpCatatan').value||'').trim(),
     by:(curUser()||{}).name || '', ts:new Date().toISOString()});
   if($('qpCatatan')) $('qpCatatan').value = '';
@@ -5959,7 +6201,7 @@ function wkData(){
     (!dosen || dosen.some(n=>namaCocok(d.oleh, n))));
 
   /* yang macet */
-  const diam = items.filter(i=>{ const d = daysSince(lastUpd(i)); return i.stage!=='selesai' && (d===null || d>14); });
+  const diam = items.filter(i=>{ const d = daysSince(lastUpd(i)); return !luaranTuntas(i) && (d===null || d>14); });
   const telat = tugasSemua.filter(t=>t.status!=='Selesai' && t.tenggat && daysSince(t.tenggat) > 0);
   const revisi = items.filter(i=>/Revision|Revisi/i.test(String(i.status||'')))
     .concat(tugasSemua.filter(t=>t.status==='Revisi').map(t=>({nama:t.judul, project:t.project, status:'Revisi', pic:t.pic, kind:'tg'})));
@@ -6766,39 +7008,8 @@ function loginErr(msg){ const e=$('loginErr'); if(!e) return; e.className = 'lp-
 function togglePass(){ const i=$('loginPass'); if(!i) return; i.type = i.type==='password' ? 'text' : 'password';
   const e=$('lpEye'); if(e) e.innerHTML = i.type==='password' ? '&#9673;' : '&#9678;'; }
 function loginMenunggu(){ loginErr(''); setLoginState('busy', 'Mengambil data terbaru dari spreadsheet…'); }
-async function doLogin(){
-  const mail = $('loginMail').value.trim(), pass = $('loginPass').value;
-  if(!mail || !pass){ loginErr('Surel dan kata sandi wajib diisi.'); return; }
-  let a = findAkun(mail);
-  // akun bisa saja dibuat di perangkat lain: tarik dulu sebelum menolak
-  if(!a || String(a.sandi||'') !== pass){
-    // selalu tarik ulang sebelum menolak: akun bisa baru dibuat di perangkat lain
-    if(typeof pullApi === 'function' && apiCfg().url){
-      loginMenunggu();
-      try{ await pullApi(true); }catch(e){}
-      loginSiap(PULLED);
-      a = findAkun(mail);
-    }
-  }
-  if(!a){
-    if(PULLED && !akunList().length) loginErr('Lembar RH_Akun masih kosong, jadi belum ada akun yang bisa masuk. '+
-      'Tambahkan satu baris administrator di spreadsheet lebih dulu.');
-    else loginErr(PULLED ? 'Akun tidak dikenali. Hubungi administrator CESGS.'
-      : 'Akun belum ditemukan dan data dari spreadsheet belum terambil. Periksa jaringan lalu coba lagi.');
-    return;
-  }
-  if(String(a.aktif||'ya').toLowerCase()==='tidak'){ loginErr('Akun ini dinonaktifkan.'); return; }
-  if(String(a.sandi||'') !== pass){ loginErr('Kata sandi salah.'); return; }
-  EX.user = {name:a.nama||mail, mail:String(mail).toLowerCase(), role:a.peran||'Peneliti', foto:a.foto||''};
-  loginErr(''); $('loginPass').value='';
-  save(true); hideLogin();
-  /* Halaman yang sempat tergambar tanpa identitas harus digambar ulang.
-     renderAll menandai semua halaman basi, jadi tidak ada lagi sisa tampilan
-     milik Tamu yang bertahan sampai halaman dimuat ulang. */
-  renderAll(); restoreUI();
-  toast('Selamat datang, '+String(EX.user.name).split(' ')[0]);
-  setTimeout(()=>{ try{ tawarkanNotif(); }catch(e){} }, 1400);
-}
+/* doLogin ada di blok "Tambalan peladen" dekat akhir berkas, sejak
+   verifikasi kata sandi dipindah ke peladen. */
 function doLogout(){
   if(!confirm('Keluar dari sesi ini? Data tetap tersimpan.')) return;
   EX.user = null; save(true); flushSave();
@@ -7197,7 +7408,23 @@ function outboundProgres(){
       catatan:e.t||'', oleh:e.by||'', waktu:e.ts||'', sebut:picJoin(e.sb||[])})); });
   return rows;
 }
-function outboundStore(k){ return recs(k).map(o=>{ const out={}; STORES[k].cols.forEach(c=>out[c]= o[c]==null?'':o[c]); return out; }); }
+/* Kolom yang tidak pernah dikirim dalam keadaan kosong. Peramban menerima
+   daftar akun tanpa kata sandi, jadi salinannya memang kosong; bila kolom itu
+   ikut terkirim, penggabungan di Apps Script menimpa sandi di RH_Akun dengan
+   nilai kosong. Sandi hanya dikirim bila pemakai benar-benar mengisi yang baru. */
+const KOLOM_JANGAN_KOSONG = {akun:['sandi']};
+function outboundStore(k){
+  const jaga = KOLOM_JANGAN_KOSONG[k] || [];
+  return recs(k).map(o=>{
+    const out={};
+    STORES[k].cols.forEach(c=>{
+      const v = o[c]==null?'':o[c];
+      if(jaga.indexOf(c)>=0 && String(v).trim()==='') return;   // kolomnya dilewati, bukan dikosongkan
+      out[c]=v;
+    });
+    return out;
+  });
+}
 function outboundRef(){
   const R = EX.ref||{}, rows=[];
   ['ds','pj','pr'].forEach(t=>(R[t]||[]).forEach(v=>rows.push({tipe:t, nilai:v, universitas:'', negara:'', lintang:'', bujur:''})));
@@ -7219,7 +7446,8 @@ function buildOutbound(){
     luaran: outboundLuaran(), progres: outboundProgres(), referensi: outboundRef(),
     tugas: outboundStore('tugas'), milestone: outboundStore('milestone'),
     dokumen: outboundStore('dokumen'), korespondensi: outboundStore('korespondensi'),
-    akun: outboundStore('akun'), komentar: outboundStore('komentar') };
+    akun: outboundStore('akun'), komentar: outboundStore('komentar'),
+    grant: outboundStore('grant') };
 }
 function outbound(){
   if(OUT_CACHE) return OUT_CACHE;
@@ -7286,7 +7514,7 @@ function applyServer(out, sent){
     else if(ref[r.tipe]) ref[r.tipe].push(r.nilai);
   });
   EX.ref = ref; EX.coords = coords;
-  ['tugas','milestone','dokumen','akun','komentar','korespondensi'].forEach(k=>{
+  ['tugas','milestone','dokumen','akun','komentar','korespondensi','grant'].forEach(k=>{
     if(!Array.isArray(out[k])) return;
     EX[k] = gabungRec(k, EX[k]||[], out[k]);
   });
@@ -7296,7 +7524,7 @@ function applyServer(out, sent){
     const ak = sent.addedKeys||[], ek = sent.editKeys||[];
     EX.added = (EX.added||[]).filter(a=>ak.indexOf(a.key)<0);
     ek.forEach(k=>{ delete EX.edits[k]; });
-    ['tugas','milestone','dokumen','akun','korespondensi'].forEach(k=>(EX[k]||[]).forEach(r=>{ delete r._new; delete r._dirty; }));
+    ['tugas','milestone','dokumen','akun','korespondensi','grant'].forEach(k=>(EX[k]||[]).forEach(r=>{ delete r._new; delete r._dirty; }));
     tombAck();
   }
   EX.api.syncedAt = out.syncedAt || new Date().toISOString();
@@ -7431,21 +7659,61 @@ function renderApi(){
 /* Saringan tambahan dipakai halaman yang punya kotak tipe sendiri, supaya
    agregat per project dihitung ulang dari baris yang lolos, bukan disaring
    setelah dijumlahkan. */
+/* ══════ KARTU PROJECT DAN CATATAN HIBAH ══════
+   Satu kartu di Grant Control menggabungkan dua sumber. Baris riset di lembar
+   utama memberi daftar luaran dan capaiannya, sedangkan catatan hibah di
+   RH_Grant memberi nilai kontrak, sumber dana, dan masa berlakunya.
+
+   Aturan angka dibuat tegas supaya tidak ada penjumlahan ganda: begitu sebuah
+   project punya catatan hibah dengan nominal terisi, angka itulah yang dipakai
+   dan kolom dana pada baris riset diabaikan sepenuhnya. Project yang belum
+   punya catatan hibah berperilaku persis seperti sebelumnya, yaitu menjumlah
+   kolom dana tiap baris risetnya. */
+function grantKunci(n){ return String(n||'').trim().toLowerCase(); }
+function grantPeta(){
+  const m = {};
+  recs('grant').forEach(g=>{ const k = grantKunci(g.title); if(k) m[k] = g; });
+  return m;
+}
+/* Nama project yang sah kini berasal dari dua tempat: judul catatan grant, dan
+   nama project yang sudah terlanjur ada di lembar riset. Yang kedua tetap
+   diikutkan supaya baris lama masih bisa disunting meski grant-nya belum
+   pernah dicatat. */
+function grantJudul(){ return recs('grant').map(g=>String(g.title||'').trim()).filter(Boolean); }
+function grantDari(nama){ return grantPeta()[grantKunci(nama)] || null; }
+function angka(v){ const n = parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,'')); return isNaN(n) ? 0 : n; }
+function susunProject(name, arts, g){
+  const cust = EX.outputs.filter(o=>o.project===name);
+  const pakaiGrant = !!(g && angka(g.budget) > 0);
+  const nom  = pakaiGrant ? angka(g.budget) : arts.reduce((s,r)=>s+r.nm,0);
+  const cair = pakaiGrant ? angka(g.cair)    : arts.reduce((s,r)=>s+r.cr,0);
+  const totalOut = arts.length + cust.length;
+  const done = arts.filter(r=>DONE_STATUS.includes(r.st)).length + cust.filter(o=>o.status==='Selesai').length;
+  const items = arts.map(r=>({kind:'art', key:r.key, stage:stageOf(r)}))
+    .concat(cust.map(o=>({kind:'cus', id:o.id, key:o.id, stage:CUSTOM_STAGE[o.status]||'rencana'})));
+  const avg = items.length ? Math.round(items.reduce((s,x)=>s+progOf(x),0)/items.length) : 0;
+  return {name, arts, cust, nom, cair, sisa:nom-cair, totalOut, done, avg, grant:g||null, pakaiGrant,
+    prog:pct(done,totalOut), serap:pct(cair,nom), gap: pct(cair,nom)-pct(done,totalOut)};
+}
 function projects(saring){
   const rows = saring ? F().filter(saring) : F(); const m = {};
   rows.forEach(r=>{ (m[r.pr] = m[r.pr] || []).push(r); });
-  Object.keys(m).forEach(k=>{ /* keep */ });
-  return Object.entries(m).map(([name, arts])=>{
-    const cust = EX.outputs.filter(o=>o.project===name);
-    const nom = arts.reduce((s,r)=>s+r.nm,0), cair = arts.reduce((s,r)=>s+r.cr,0);
-    const totalOut = arts.length + cust.length;
-    const done = arts.filter(r=>DONE_STATUS.includes(r.st)).length + cust.filter(o=>o.status==='Selesai').length;
-    const items = arts.map(r=>({kind:'art', key:r.key, stage:stageOf(r)}))
-      .concat(cust.map(o=>({kind:'cus', id:o.id, key:o.id, stage:CUSTOM_STAGE[o.status]||'rencana'})));
-    const avg = items.length ? Math.round(items.reduce((s,x)=>s+progOf(x),0)/items.length) : 0;
-    return {name, arts, cust, nom, cair, sisa:nom-cair, totalOut, done, avg,
-      prog:pct(done,totalOut), serap:pct(cair,nom), gap: pct(cair,nom)-pct(done,totalOut)};
+  const gm = grantPeta();
+  const out = Object.entries(m).map(([name, arts])=>susunProject(name, arts, gm[grantKunci(name)]));
+  /* Hibah yang belum punya satu pun baris riset tetap tampil sebagai kartu,
+     sebab justru pada tahap itulah pemantauan paling dibutuhkan: kontrak sudah
+     berjalan sementara papernya belum satu pun terdaftar. Saringan tipe dan
+     tahun diuji terhadap baris semu supaya perilakunya sama dengan project
+     biasa. */
+  recs('grant').forEach(g=>{
+    const k = grantKunci(g.title);
+    if(!k || Object.keys(m).some(n=>grantKunci(n)===k)) return;
+    const semu = {ty:g.tipe||'', th:String(g.tahun||''), pr:g.title, st:'', ds:'', pj:g.project_lead||'', tg:''};
+    if(!fHit('ty', semu.ty) || !fHit('th', semu.th)) return;
+    if(saring && !saring(semu)) return;
+    out.push(susunProject(g.title, [], g));
   });
+  return out;
 }
 function setCtl(v){
   S.ctl = v;
@@ -7464,6 +7732,87 @@ function ring(p, nama){
     '<circle cx="37" cy="37" r="'+R+'" fill="none" stroke="#EDEFF4" stroke-width="8"></circle>'+
     '<circle cx="37" cy="37" r="'+R+'" fill="none" stroke="'+gradUrl(k,sfx)+'" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'"></circle></svg>'+
     '<div class="progress-ring-center"><div class="prc-num" style="color:'+GRAD_STOPS[k][1]+';font-size:17px">'+p+'%</div><div class="prc-pct">luaran</div></div></div>';
+}
+/* ══════ FORMULIR GRANT ══════
+   Satu modal dipakai untuk dua keperluan, mencatat hibah baru dan menyunting
+   yang sudah ada, karena isiannya sama persis. GR.uid kosong berarti sedang
+   membuat entri baru. */
+const GR = { uid:'' };
+function openGrantModal(nama, uid){
+  const g = uid ? recs('grant').find(x=>x.uid===uid) : (nama ? grantDari(nama) : null);
+  GR.uid = g ? g.uid : '';
+  $('grTitle').textContent = g ? 'Sunting grant' : 'Tambah grant';
+  $('gOrangOpts').innerHTML = orangOpts().map(n=>'<option value="'+esc(n)+'"></option>').join('');
+  const isiSel = (id, opsi, nilai)=>{ $(id).innerHTML =
+    opsi.map(t=>'<option'+(t===nilai?' selected':'')+'>'+esc(t)+'</option>').join(''); };
+  /* Skema dan Non-Skema selalu tersedia, ditambah tipe lain yang kebetulan sudah
+     dipakai di lembar riset. Kalau daftarnya hanya diambil dari lembar riset,
+     grant pertama pada spreadsheet yang masih kosong tidak punya pilihan sama
+     sekali. */
+  const tipe = uniq(['Skema','Non-Skema'].concat(OPT.ty||[]));
+  isiSel('gStatus', GRANT_STATUS, g ? String(g.status||'') : GRANT_STATUS[0]);
+  isiSel('gDash',   GRANT_DASH,   g ? String(g.dashboard_status||'') : 'Inactive');
+  isiSel('gTipe',   tipe,         g ? String(g.tipe||'') : 'Skema');
+  $('gDivisi').value  = GRANT_DIVISI;
+  $('gTitle').value   = g ? (g.title||'')            : (nama || '');
+  $('gLead').value    = g ? (g.project_lead||'')     : ((curUser()||{}).name || '');
+  $('gDesc').value    = g ? (g.description||'')      : '';
+  $('gNotes').value   = g ? (g.notes||'')            : '';
+  $('gFunder').value  = g ? (g.funder||'')           : '';
+  $('gBudget').value  = g ? (g.budget||'')           : '';
+  $('gFile').value    = g ? (g.file_path||'')        : '';
+  $('gSubDate').value = g ? (g.submission_date||'')  : '';
+  $('gDecDate').value = g ? (g.decision_date||'')    : '';
+  $('gTahun').value   = g ? (g.tahun||'')            : new Date().getFullYear();
+  $('gCair').value    = g ? (g.cair||'')             : '';
+  $('gHapus').style.display = g ? '' : 'none';
+  $('gTitle').readOnly = !!g;                // menggantinya akan memutus tautan ke baris riset
+  $('gTitleKet').textContent = g
+    ? 'Judul dikunci setelah tersimpan, sebab menggantinya akan memutus tautan ke baris riset yang sudah menempel.'
+    : 'Judul ini menjadi nama project di seluruh dasbor. Baris riset menempel ke grant lewat kecocokan judul.';
+  $('grModal').classList.add('show');
+  setTimeout(()=>{ try{ (g ? $('gBudget') : $('gTitle')).focus(); }catch(e){} }, 60);
+}
+function closeGrantModal(){ $('grModal').classList.remove('show'); GR.uid = ''; }
+function saveGrant(){
+  const title = $('gTitle').value.trim().replace(/\s+/g,' ');
+  if(!title){ toast('Title belum diisi'); return; }
+  const lead = $('gLead').value.trim();
+  if(!lead){ toast('Project Lead wajib diisi'); return; }
+  const budget = Math.max(0, angka($('gBudget').value));
+  const cair   = Math.max(0, angka($('gCair').value));
+  if(budget > 0 && cair > budget){ toast('Dana cair melebihi Budget, periksa lagi angkanya'); return; }
+  const sub = $('gSubDate').value, dec = $('gDecDate').value;
+  if(sub && dec && dec < sub){ toast('Decision Date mendahului Submission Date'); return; }
+  /* Satu project hanya boleh punya satu catatan grant, kalau tidak angkanya
+     akan bergantung pada catatan mana yang kebetulan terbaca lebih dulu. */
+  const kembar = recs('grant').find(x=>x.uid!==GR.uid && grantKunci(x.title)===grantKunci(title));
+  if(kembar){ toast('Judul ini sudah punya catatan grant, sunting yang lama saja'); return; }
+  const isi = {
+    title: title, project_lead: lead, status: $('gStatus').value, division: GRANT_DIVISI,
+    description: $('gDesc').value.trim(), notes: $('gNotes').value.trim(),
+    funder: $('gFunder').value.trim(), budget: budget,
+    dashboard_status: $('gDash').value, file_path: $('gFile').value.trim(),
+    submission_date: sub, decision_date: dec,
+    tipe: $('gTipe').value, tahun: $('gTahun').value.trim() || thnDari(sub), cair: cair
+  };
+  if(GR.uid){
+    const r = recs('grant').find(x=>x.uid===GR.uid);
+    if(r && !bolehUbahRec('grant', r)){ tolakUbah('grant'); return; }
+    updRec('grant', GR.uid, isi);
+    toast('Grant diperbarui');
+  } else {
+    addRec('grant', Object.assign({dibuat:new Date().toISOString().slice(0,10)}, isi));
+    toast('Grant ditambahkan, project ini kini bisa dipilih di formulir riset');
+  }
+  closeGrantModal();
+  showPage('control');
+}
+function hapusGrant(){
+  if(!GR.uid) return;
+  const uid = GR.uid;
+  closeGrantModal();
+  delRec('grant', uid, 'grant');
 }
 function renderControl(){
   msTipeLokal('ctlTipe', renderControl);
@@ -7500,6 +7849,9 @@ function renderControl(){
       (p.arts.filter(r=>r.st==='Rejected').length?'<span class="mini-chip mc-late">'+p.arts.filter(r=>r.st==='Rejected').length+' ditolak</span>':'')+'</div></div></div>'+
       '<div class="gc-body"><div>'+
         '<div class="kv"><span>Pendanaan</span><b>'+fmtM(p.nom)+'</b></div>'+
+        (p.grant ? '<div class="kv"><span>Funder</span><b>'+esc(p.grant.funder||'\u2014')+'</b></div>'+
+                   '<div class="kv"><span>Project Lead</span><b>'+esc(p.grant.project_lead||'\u2014')+'</b></div>'+
+                   '<div class="kv"><span>Status grant</span><b>'+esc(p.grant.status||'\u2014')+'</b></div>' : '')+
         '<div class="kv"><span>Sudah cair</span><b>'+fmtM(p.cair)+'</b></div>'+
         '<div class="kv"><span>Belum cair</span><b>'+fmtM(p.sisa)+'</b></div>'+
         '<div class="progress-bar"><div class="progress-fill" style="width:'+Math.min(100,p.serap)+'%"></div></div>'+
@@ -7512,7 +7864,9 @@ function renderControl(){
         '<div class="budline"><span>Rerata progres pengerjaan</span><b>'+p.avg+'%</b></div>'+
       '</div></div>'+flag+
       '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn-xs" onclick="gotoLuaran(\''+esc(p.name).replace(/'/g,"\\'")+'\')">Perbarui luaran</button>'+
-      '<button class="btn-xs" onclick="openLuaranModal(\''+esc(p.name).replace(/'/g,"\\'")+'\')">+ Tambah luaran</button></div></div>';
+      '<button class="btn-xs" onclick="openLuaranModal(\''+esc(p.name).replace(/'/g,"\\'")+'\')">+ Tambah luaran</button>'+
+      '<button class="btn-xs" onclick="openGrantModal(\''+esc(p.name).replace(/'/g,"\\'")+'\')">'+
+        (p.grant ? 'Sunting grant' : '+ Catat pendanaan')+'</button></div></div>';
   }).join('') + pgBar('ctlList', ps.length, 'project');
   if(!ps.length) $('ctlList').innerHTML = '<div class="empty-state">Tidak ada project yang cocok.</div>';
 }
@@ -7754,7 +8108,7 @@ function renderAll(){
   $('navGrant').textContent = ps.filter(p=>p.nom>0).length;
   const sayaLu = (curUser() && lgLingkupAktif() === 'saya') ? curUser().name : '';
   const items = luaranItems().filter(i=>luaranMilik(i, sayaLu));
-  const perlu = items.filter(i=>{ const d=daysSince(lastUpd(i)); return i.stage!=='selesai' && (d===null || d>14); }).length;
+  const perlu = items.filter(i=>{ const d=daysSince(lastUpd(i)); return !luaranTuntas(i) && (d===null || d>14); }).length;
   $('navLu2').textContent = perlu;
   /* Angka di bilah kiri disamakan dengan isi halamannya. Sejak tugas dan
      tenggat dibuat per akun, menghitung seluruh kantor membuat lencana dan
@@ -7828,9 +8182,14 @@ window.doLogin = async function(){
              role: a.peran || 'Peneliti', foto: a.foto || ''};
   loginErr(''); $('loginPass').value = '';
   save(true); hideLogin();
-  try{ await pullApi(true); }catch(e){}
+  /* Identitas digambar lebih dulu, sebelum tarikan data. Sebelumnya renderAll
+     menunggu pullApi (Apps Script bisa lambat), jadi begitu gerbang terbuka,
+     bilah kiri dan beranda sempat menampilkan Tamu dari gambaran terakhir
+     sebelum masuk. renderAll kedua sesudah pullApi hanya menyegarkan data,
+     identitas sudah benar dari awal. */
   renderAll(); restoreUI();
   toast('Selamat datang, ' + String(EX.user.name).split(' ')[0]);
+  try{ await pullApi(true); renderAll(); }catch(e){}
   setTimeout(()=>{ try{ tawarkanNotif(); }catch(e){} }, 1400);
 };
 
